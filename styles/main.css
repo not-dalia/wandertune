@@ -1,0 +1,64 @@
+html,
+body,
+.town {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+}
+.town {
+  position: relative;
+  background: #f7c834;
+}
+.town > * {
+  position: absolute;
+}
+.tile {
+  background: #008000;
+  z-index: 1;
+}
+.path {
+  background: #f7c834;
+  z-index: 2;
+}
+.path.path_h.selected:after {
+  top: 8px;
+  height: 4px;
+  background: #ff69b4;
+  left: 0;
+  right: 0;
+  position: absolute;
+  content: ' ';
+}
+.path.path_v.selected:after {
+  left: 8px;
+  width: 4px;
+  background: #ff69b4;
+  top: 0;
+  bottom: 0;
+  position: absolute;
+  content: ' ';
+  z-index: 4;
+}
+.path.transparent {
+  background: transparent !important;
+}
+.node {
+  color: #ffa500;
+  background: #ffa500;
+  z-index: 3;
+}
+.node:hover {
+  background: #d2691e !important;
+  cursor: pointer;
+}
+.node.disabled {
+  background: transparent;
+  border-radius: none;
+  outline: none;
+}
+.node.selected {
+  background: #ff69b4;
+}
+.node.last {
+  background: #f00 !important;
+}
