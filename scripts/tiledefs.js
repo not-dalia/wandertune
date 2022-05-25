@@ -3,7 +3,7 @@ const pixelSize = 4;
 function tree(type) {
   return {
     type,
-    src: `/tiles/forest/${type}.png`,
+    src: `tiles/forest/${type}.png`,
     width: 52 / pixelSize,
     height: 52 / pixelSize,
     boundary: {
@@ -12,7 +12,7 @@ function tree(type) {
       w: 5,
       h: 4
     },
-    shadow: `/tiles/forest/shadow.png`
+    shadow: `tiles/forest/shadow.png`
   }
 }
 
@@ -251,7 +251,7 @@ function createTrees(tileSize, trees, boundary) {
 
 function createArtifacts(tileSize, artifacts, artifactColor) {
   let artifactMap = {};
-  let artifactCount = getRandomInt(20) + 15;
+  let artifactCount = getRandomInt(30) + 35;
   for (let t = 0; t < artifactCount; t++) {
     let artifact = artifacts[getRandomInt(artifacts.length)];
     let tx = getRandomInt(tileSize - 8) + 4;
