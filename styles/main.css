@@ -7,17 +7,19 @@ body,
 }
 .town {
   position: relative;
-  background: #f7c834;
+  background: #726d67;
+  /* background: #e7ca6e; */
 }
 .town > * {
   position: absolute;
 }
 .tile {
-  background: #008000;
+  /* background: #008000; */
   z-index: 1;
 }
 .path {
-  background: #f7c834;
+  background: transparent;
+  /* background: #f7c834; */
   z-index: 2;
 }
 .path.path_h.selected:after {
@@ -44,8 +46,11 @@ body,
 }
 .node {
   color: #ffa500;
-  background: #ffa500;
+  background: blue;
   z-index: 3;
+  border-radius: 100%;
+  outline: 4px solid white;
+  outline-offset: -1px;
 }
 .node:hover {
   background: #d2691e !important;

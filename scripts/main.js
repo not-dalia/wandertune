@@ -1,5 +1,5 @@
-const tileSize = 200;
 const pathWidth = 20;
+const tileSize = 200;
 let selectedNodes = [];
 let elementMap = [];
 
@@ -117,10 +117,10 @@ function generateTileMap(availableTileCounts) {
 			if (tx == availableTileCounts.x || ty == availableTileCounts.y) continue;
 			elementMap.push({
 				x: tx * 4 + 1, y: ty * 4 + 1,
-				locX: tx * (tileSize + pathWidth) + pathWidth, locY: ty * (tileSize + pathWidth) + pathWidth,
+				locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth),
 				type: 'tile',
 				orientation: 'v',
-				w: tileSize, h: tileSize,
+				w: tileSize + pathWidth, h: tileSize + pathWidth,
         tileData: randomTile(tileSize)
 			})
 			
@@ -183,11 +183,6 @@ function renderPaths() {
 	})
 }
 
-function drawTile(canvas) {
-  if (!canvas.getContext) return;
-  var ctx = canvas.getContext('2d');
-}
-
 function createMapElement(item) {
 	let element = item.type == 'tile' ? document.createElement('canvas') : document.createElement('div');
 	element.id = `n${item.x}_${item.y}`;
@@ -196,8 +191,8 @@ function createMapElement(item) {
 	element.style.width = `${item.w}px`;
 	element.style.height = `${item.h}px`;
   if (item.type == 'tile') {
-    element.setAttribute('width', tileSize)
-    element.setAttribute('height', tileSize)  
+    element.setAttribute('width', item.w)
+    element.setAttribute('height', item.h)  
   }
 	element.setAttribute('data-type', item.type)
 	element.setAttribute('data-orientation', item.orientation)
@@ -255,13 +250,27 @@ function drawTiles() {
       }
       var ctx = canvas.getContext('2d');
       ctx.fillStyle = item.tileData.color;
-      ctx.fillRect(0, 0, tileSize, tileSize);
+      ctx.fillRect(pathWidth, pathWidth, tileSize, tileSize);
       Object.keys(item.tileData.pathMap).forEach(k => {
         let p = item.tileData.pathMap[k];
         ctx.fillStyle = p.data.color;
-        ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+        ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
       })
 
+			Object.keys(item.tileData.artifactMap).forEach(k => {
+        let p = item.tileData.artifactMap[k];
+        ctx.fillStyle = p.data.color;
+        ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
+      })
+
+			ctx.globalAlpha = 0.3
+			Object.keys(item.tileData.shadowMap).forEach(k => {
+        let p = item.tileData.shadowMap[k];
+        ctx.fillStyle = 'black';
+        ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
+      })
+
+			ctx.globalAlpha = 1
 			let objectKeys = Object.keys(item.tileData.objectsMap).sort((a, b) => { return item.tileData.objectsMap[a].y - item.tileData.objectsMap[b].y })
 			drawObjectInOrder(objectKeys, item.tileData.objectsMap, ctx);
     }
