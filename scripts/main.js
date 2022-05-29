@@ -121,7 +121,7 @@ function generateTileMap(availableTileCounts) {
 				type: 'tile',
 				orientation: 'v',
 				w: tileSize + pathWidth, h: tileSize + pathWidth,
-        tileData: randomTile(tileSize)
+        // tileData: randomTile(tileSize)
 			})
 			
 			elementMap = elementMap.concat(generateTileQuarter(tx * 4, ty * 4))
@@ -183,7 +183,7 @@ function renderPaths() {
 	})
 }
 
-function createMapElement(item) {
+function createMapElement(item, i) {
 	let element = item.type == 'tile' ? document.createElement('canvas') : document.createElement('div');
 	element.id = `n${item.x}_${item.y}`;
 	element.style.top = `${item.locY}px`;
@@ -195,6 +195,7 @@ function createMapElement(item) {
     element.setAttribute('height', item.h)  
   }
 	element.setAttribute('data-type', item.type)
+	element.setAttribute('data-element-index', i)
 	element.setAttribute('data-orientation', item.orientation)
 	element.classList.add(item.type)
 	if (item.transparent) element.classList.add('transparent')
@@ -286,6 +287,63 @@ function drawTiles() {
   })
 }
 
+function createRiverPath(elementMap, availableTileCounts) {
+	console.log(availableTileCounts)
+	let side = ['x', 'y'][getRandomInt(2)]
+	let coordinates = {
+		x:  side == 'x' ? getRandomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][getRandomInt(2)],
+		y: side == 'y' ? getRandomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][getRandomInt(2)],
+	}
+	let edgePoint = {
+		x: coordinates.x * 4 + 1,
+		y: coordinates.y * 4 + 1,
+	}
+	let element = document.querySelector(`#n${edgePoint.x}_${edgePoint.y}`)
+	let elementIndex = element.dataset.elementIndex;
+	let elementData = elementMap[elementIndex]
+	let direction;
+	if (edgePoint.x == 1) direction = 'l'
+	else if (edgePoint.x == (availableTileCounts.x - 1) * 4 + 1) direction = 'r'
+	else if (edgePoint.y == 1) direction = 'u'
+	else direction = 'd'
+
+	elementData.tileData = riverStart(tileSize, direction)
+	console.log(elementData)
+
+	let canGenerateNextTile = true;
+	while (canGenerateNextTile) {
+		let riverData = elementMap[elementIndex].tileData.objectsMap[0].data
+		let direction = directions[(directions.indexOf(riverData.direction.exit) + 2)%4]
+		if (!riverData.direction.exit) break;
+		if (riverData.direction.exit == 'u') {
+			coordinates.y = coordinates.y - 1;
+			if (coordinates.y < 0) break;
+		} else if (riverData.direction.exit == 'd') {
+			coordinates.y = coordinates.y + 1;
+			if (coordinates.y > availableTileCounts.y - 1) break;
+		} else if (riverData.direction.exit == 'l') {
+			coordinates.x = coordinates.x - 1;
+			if (coordinates.x < 0) break;
+		} else {
+			coordinates.x = coordinates.x + 1;
+			if (coordinates.x > availableTileCounts.x - 1) break;
+		}
+		let newPoint = {
+			x: coordinates.x * 4 + 1,
+			y: coordinates.y * 4 + 1,
+		}
+		element = document.querySelector(`#n${newPoint.x}_${newPoint.y}`)
+		if (elementMap[ element.dataset.elementIndex].tileData) {
+			console.log(direction)
+			elementMap[elementIndex].tileData = tileDefinitions['river'].createTile(tileSize, 'summer', riverData.direction.enter, 'lake')
+		} else {
+			elementIndex = element.dataset.elementIndex;
+			elementMap[elementIndex].tileData = riverStart(tileSize, direction)
+		}
+	}
+
+}
+
 function start() {
 	const town = document.querySelector('.town');
 	let availableSpace = getAvailableScreenSpace();
@@ -296,8 +354,13 @@ function start() {
 	town.innerHTML = ''
 	town.style.width = `${availableTileCounts.x * tileSize + availableTileCounts.x * pathWidth + pathWidth}px`
 	town.style.height = `${availableTileCounts.y * tileSize + availableTileCounts.y * pathWidth + pathWidth}px`
-	elementMap.forEach(e => {
-		town.append(createMapElement(e));
+	elementMap.forEach((e, i) => {
+		town.append(createMapElement(e, i));
+	})
+	createRiverPath(elementMap, availableTileCounts)
+	elementMap.forEach((e, i) => {
+		if (e.tileData) return
+		e.tileData = randomTile(tileSize)
 	})
 
   drawTiles();
