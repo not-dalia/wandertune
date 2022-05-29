@@ -1,5 +1,6 @@
 const pixelSize = 4;
 const directions = ['u', 'r', 'd', 'l']
+let currentSeason = 'spring'
 
 function tree(type) {
   return {
@@ -315,6 +316,41 @@ function createArtifacts(tileSize, artifacts, artifactColor, countMin, countRand
   return artifactMap;
 }
 
+
+
+function createBridges(tileSize, direction) {
+  let bridges = []
+  if (direction.enter == 'l' || direction.exit == 'l') {
+    rotation = 0
+    bridges.push({
+      type: 'bridge',
+      y: (tileSize - 10) / 2,
+      x: 0,
+      data: {
+        rotation,
+        src: `tiles/river/bridge.png`,
+        width: 8,
+        height: 20,
+      }
+    })
+  }
+  if (direction.enter == 'u' || direction.exit == 'u')  {
+    rotation = 0
+    bridges.push({
+      type: 'bridge',
+      x: (tileSize - 10) / 2,
+      y: 0,
+      data: {
+        rotation,
+        src: `tiles/river/bridge_h.png`,
+        height: 20,
+        width: 8,
+      }
+    })
+  }
+  return bridges;
+}
+
 function createRiver(type, direction) {
   let riverData = river(type, direction)
 
@@ -413,6 +449,7 @@ const tileDefinitions = {
       },
     },
     riverPath: ['straight', 'bend', 'lake'],
+    bridge: 'bridge',
     path: {
       min_w: 2,
       max_w: 5,
@@ -450,6 +487,7 @@ const tileDefinitions = {
       let pathMap = createPath(tileSize, tileDefinitions.river.path);
       let artifactMap = createArtifacts(tileSize, tileDefinitions.river.artifacts, tileDefinitions.river.seasons[season].artifactColor, 20, 10);
       let {riverMap: objectsMap} = createRiver(type, direction);
+      let bridges = createBridges(tileSize, objectsMap[0].data.direction )
       return {
         type: 'river',
         riverType: type,
@@ -457,7 +495,8 @@ const tileDefinitions = {
         color: tileDefinitions.forest.seasons[season].color,
         pathMap,
         objectsMap,
-        artifactMap
+        artifactMap,
+        bridges
       }
     }
 	}
@@ -467,9 +506,9 @@ function randomTile(tileSize) {
   let tileTypes = Object.keys(tileDefinitions);
   let type = getRandomInt(tileTypes.length);
   // return tileDefinitions[tileTypes[type]].createTile(tileSize)
-  return tileDefinitions['forest'].createTile(tileSize, 'summer')
+  return tileDefinitions['forest'].createTile(tileSize, currentSeason)
 }
 
 function riverStart(tileSize, direction) {
-  return tileDefinitions['river'].createTile(tileSize, 'summer', direction, ['bend', 'straight'][getRandomInt(2)])
+  return tileDefinitions['river'].createTile(tileSize, currentSeason, direction, ['bend', 'straight'][getRandomInt(2)])
 }

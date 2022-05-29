@@ -233,11 +233,12 @@ function drawObjectInOrder(objectKeys, objectList, ctx) {
 	let img = new Image();
 	img.onload = function() {
 		if (o.data.rotation) {
-			let translateDistance = tileSize / 2
+			let translateDistanceX = o.data.width * pixelSize / 2
+			let translateDistanceY = o.data.height * pixelSize / 2
 			let rotationAngle = o.data.rotation * Math.PI/2
-			ctx.translate(translateDistance + o.x * pixelSize , translateDistance + o.x * pixelSize);
+			ctx.translate(translateDistanceX + o.x * pixelSize , translateDistanceY + o.y * pixelSize);
 			ctx.rotate(rotationAngle);
-			ctx.drawImage(img, -translateDistance, -translateDistance);
+			ctx.drawImage(img, -translateDistanceX, -translateDistanceY);
 			ctx.resetTransform()
 		} else {
 			ctx.drawImage(img, o.x * pixelSize, o.y * pixelSize);
@@ -282,7 +283,15 @@ function drawTiles() {
 
 			ctx.globalAlpha = 1
 			let objectKeys = Object.keys(item.tileData.objectsMap).sort((a, b) => { return item.tileData.objectsMap[a].y - item.tileData.objectsMap[b].y })
-			drawObjectInOrder(objectKeys, item.tileData.objectsMap, ctx);
+			let objectsMap = {...item.tileData.objectsMap};
+			if (item.tileData.bridges)	{
+				item.tileData.bridges.forEach((b, i) => {
+					objectsMap[`b_${i}`] = b
+					objectKeys.push(`b_${i}`)
+				})
+			}
+			drawObjectInOrder(objectKeys, objectsMap, ctx);
+
     }
   })
 }
@@ -335,7 +344,7 @@ function createRiverPath(elementMap, availableTileCounts) {
 		element = document.querySelector(`#n${newPoint.x}_${newPoint.y}`)
 		if (elementMap[ element.dataset.elementIndex].tileData) {
 			console.log(direction)
-			elementMap[elementIndex].tileData = tileDefinitions['river'].createTile(tileSize, 'summer', riverData.direction.enter, 'lake')
+			elementMap[elementIndex].tileData = tileDefinitions['river'].createTile(tileSize, currentSeason, riverData.direction.enter, 'lake')
 		} else {
 			elementIndex = element.dataset.elementIndex;
 			elementMap[elementIndex].tileData = riverStart(tileSize, direction)
