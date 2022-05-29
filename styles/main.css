@@ -1,13 +1,12 @@
 html,
-body,
-.town {
+body {
   width: 100vw;
   height: 100vh;
   margin: 0;
 }
 .town {
   position: relative;
-  background: #726d67;
+  background: #d1a263;
   /* background: #e7ca6e; */
 }
 .town > * {

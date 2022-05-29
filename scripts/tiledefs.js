@@ -1,4 +1,5 @@
 const pixelSize = 4;
+const directions = ['u', 'r', 'b', 'l']
 
 function tree(type) {
   return {
@@ -13,6 +14,42 @@ function tree(type) {
       h: 4
     },
     shadow: `tiles/forest/shadow.png`
+  }
+}
+
+// let globalRotation = 0;
+
+function river(type, direction) {
+  let exitDirection = 'r';
+  let rotation;
+  switch (type) {
+    case 'straight':
+      if (direction == 'l' || direction == 'r') {
+        rotation = getRandomInt(2) * 2 + 1
+      } else {
+        rotation = getRandomInt(2) * 2
+      }
+      exitDirection = directions[(directions.indexOf(direction) + 2)%4]
+      break;
+    case 'bend':
+      rotation = (directions.indexOf(direction) - getRandomInt(2))%4
+      exitDirection = (directions.indexOf(direction) == rotation) ? direction[(directions.indexOf(direction) + 1)%4] :  direction[(directions.indexOf(direction) - 1) < 0 ? 4 : directions.indexOf(direction) - 1]
+      break;
+  }
+
+  // rotation = globalRotation%4;
+  // globalRotation++;
+
+  return {
+    type,
+    src: `tiles/river/river-${type}.png`,
+    width: 200 / pixelSize,
+    height: 200 / pixelSize,
+    direction: {
+      enter: direction,
+      exit: exitDirection
+    },
+    rotation
   }
 }
 
@@ -249,13 +286,13 @@ function createTrees(tileSize, trees, boundary) {
   return {treeMap, shadowMap};
 }
 
-function createArtifacts(tileSize, artifacts, artifactColor) {
+function createArtifacts(tileSize, artifacts, artifactColor, countMin, countRand) {
   let artifactMap = {};
-  let artifactCount = getRandomInt(30) + 35;
+  let artifactCount = getRandomInt(countRand) + countMin;
   for (let t = 0; t < artifactCount; t++) {
     let artifact = artifacts[getRandomInt(artifacts.length)];
-    let tx = getRandomInt(tileSize - 8) + 4;
-    let ty = getRandomInt(tileSize - 8) + 4;
+    let tx = getRandomInt(tileSize - 12) + 6;
+    let ty = getRandomInt(tileSize - 12) + 6;
     artifact.forEach(p => {
       let a = {
         type: 'artifact',
@@ -272,13 +309,25 @@ function createArtifacts(tileSize, artifacts, artifactColor) {
   return artifactMap;
 }
 
+function createRiver(type, direction) {
+  let riverData = river(type, direction)
+
+  let riverPoint = {
+    type: 'river',
+    x: pathWidth / 4,
+    y: pathWidth / 4,
+    data: { ...riverData }
+  }
+  return { riverMap: [riverPoint] };
+}
+
 const tileDefinitions = {
 	forest: {
     seasons: {
       summer: {
         trees: [ tree('tree_1'), tree('tree_2'), tree('tree_3')],
-        color: '#71c62b',
-        artifactColor: '#96e057',
+        color: '#7fb76f',
+        artifactColor: '#a3c89b',
       },
       spring: {
         trees: [ tree('tree_1'), tree('tree_4'), tree('tree_5')],
@@ -287,8 +336,8 @@ const tileDefinitions = {
       },
       autumn: {
         trees: [ tree('tree_6'), tree('tree_7'), tree('tree_8')],
-        color: '#f7c834',
-        artifactColor: '#ec7300',
+        color: '#b0b964',
+        artifactColor: '#c6d087',
       },
       winter: {
         trees: [ tree('tree_3'), tree('tree_9'), tree('tree_10')],
@@ -299,19 +348,24 @@ const tileDefinitions = {
     path: {
       min_w: 2,
       max_w: 5,
-      color: '#726d67',
-      stroke: '#fbe193',
+      color: '#d1a263',
+      stroke: '#edc487',
       boundary: {
         w: 6
       }
     },
     artifacts: [
-      [[0, 0], [1, 1], [2, 0], [3, 1]],
+      // [[0, 0], [1, 1], [2, 0], [3, 1]],
       [[0, 0], [0, 1], [1, 0], [1, 1]],
-      [[0, 1], [1, 0], [2, 1]],
+      // [[0, 1], [1, 0], [2, 1]],
       [[0, 0]],
       [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]],
-      [[1, 0], [1, 1], [2, 1], [0, 2]]
+      // [[1, 0], [1, 1], [2, 1], [0, 2]],
+      // [[0, 2], [2, 2], [2, 1], [2, 0], [4, 2], [4, 1]],
+      [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2], [3,2], [4, 1]],
+      [[0, 2], [1, 0], [2, 1], [2, 2]],
+      [[0, 0] [0, 1], [0, 2], [2, 2], [2, 1]],
+      [[0,0], [1,1], [1,2], [3,0], [3,1], [3,2], [4,2], [5,1]]
     ],
     createTile: (realTileSize, season) => {
       if (!season) {
@@ -321,7 +375,7 @@ const tileDefinitions = {
       let tileSize = (realTileSize / pixelSize);
       let pathMap = createPath(tileSize, tileDefinitions.forest.path);
       let {treeMap: objectsMap, shadowMap} = createTrees(tileSize, tileDefinitions.forest.seasons[season].trees, tileDefinitions.forest.path.boundary.w);
-      let artifactMap = createArtifacts(tileSize, tileDefinitions.forest.artifacts, tileDefinitions.forest.seasons[season].artifactColor);
+      let artifactMap = createArtifacts(tileSize, tileDefinitions.forest.artifacts, tileDefinitions.forest.seasons[season].artifactColor, 35, 30);
       return {
         type: 'forest',
         season: season,
@@ -332,6 +386,70 @@ const tileDefinitions = {
         artifactMap
       }
     }
+	},
+  river: {
+    seasons: {
+      summer: {
+        color: '#7fb76f',
+        artifactColor: '#a3c89b',
+      },
+      spring: {
+        color: '#71c62b',
+        artifactColor: '#96e057',
+      },
+      autumn: {
+        color: '#b0b964',
+        artifactColor: '#c6d087',
+      },
+      winter: {
+        color: '#f0f8ff',
+        artifactColor: '#bdecff',
+      },
+    },
+    riverPath: ['straight', 'bend'],
+    path: {
+      min_w: 2,
+      max_w: 5,
+      color: '#d1a263',
+      stroke: '#edc487',
+      boundary: {
+        w: 6
+      }
+    },
+    artifacts: [
+      // [[0, 0], [1, 1], [2, 0], [3, 1]],
+      [[0, 0], [0, 1], [1, 0], [1, 1]],
+      // [[0, 1], [1, 0], [2, 1]],
+      [[0, 0]],
+      [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]],
+      // [[1, 0], [1, 1], [2, 1], [0, 2]],
+      // [[0, 2], [2, 2], [2, 1], [2, 0], [4, 2], [4, 1]],
+      [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2], [3,2], [4, 1]],
+      [[0, 2], [1, 0], [2, 1], [2, 2]],
+      [[0, 0] [0, 1], [0, 2], [2, 2], [2, 1]],
+      [[0,0], [1,1], [1,2], [3,0], [3,1], [3,2], [4,2], [5,1]]
+    ],
+    createTile: (realTileSize, season, type) => {
+      if (!season) {
+        let seasons = Object.keys(tileDefinitions.forest.seasons);
+        season = seasons[getRandomInt(seasons.length)];
+      }
+      if (!type) {
+        type = tileDefinitions.river.riverPath[getRandomInt(tileDefinitions.river.riverPath.length)];
+      }
+      let tileSize = (realTileSize / pixelSize);
+      let pathMap = createPath(tileSize, tileDefinitions.river.path);
+      let artifactMap = createArtifacts(tileSize, tileDefinitions.river.artifacts, tileDefinitions.river.seasons[season].artifactColor, 20, 10);
+      let {riverMap: objectsMap} = createRiver(type, directions[getRandomInt(directions.length)]);
+      return {
+        type: 'river',
+        season: season,
+        color: tileDefinitions.forest.seasons[season].color,
+        pathMap,
+        objectsMap,
+        artifactMap
+      }
+    }
 	}
 }
 
@@ -339,4 +457,5 @@ function randomTile(tileSize) {
   let tileTypes = Object.keys(tileDefinitions);
   let type = getRandomInt(tileTypes.length);
   return tileDefinitions[tileTypes[type]].createTile(tileSize)
+  // return tileDefinitions['river'].createTile(tileSize, 'summer')
 }

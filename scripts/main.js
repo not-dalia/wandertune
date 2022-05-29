@@ -231,7 +231,16 @@ function drawObjectInOrder(objectKeys, objectList, ctx) {
 	}
 	let img = new Image();
 	img.onload = function() {
-		ctx.drawImage(img, o.x * pixelSize, o.y * pixelSize);
+		if (o.data.rotation) {
+			let translateDistance = tileSize / 2
+			let rotationAngle = o.data.rotation * Math.PI/2
+			ctx.translate(translateDistance + o.x * pixelSize , translateDistance + o.x * pixelSize);
+			ctx.rotate(rotationAngle);
+			ctx.drawImage(img, -translateDistance, -translateDistance);
+			ctx.resetTransform()
+		} else {
+			ctx.drawImage(img, o.x * pixelSize, o.y * pixelSize);
+		}
 		let newKeys = [...objectKeys]
 		newKeys.splice(0, 1)
 		drawObjectInOrder(newKeys, objectList, ctx)
@@ -257,14 +266,14 @@ function drawTiles() {
         ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
       })
 
-			Object.keys(item.tileData.artifactMap).forEach(k => {
+			item.tileData.artifactMap && Object.keys(item.tileData.artifactMap).forEach(k => {
         let p = item.tileData.artifactMap[k];
         ctx.fillStyle = p.data.color;
         ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
       })
 
 			ctx.globalAlpha = 0.3
-			Object.keys(item.tileData.shadowMap).forEach(k => {
+			item.tileData.shadowMap && Object.keys(item.tileData.shadowMap).forEach(k => {
         let p = item.tileData.shadowMap[k];
         ctx.fillStyle = 'black';
         ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
@@ -285,6 +294,8 @@ function start() {
 	console.log(availableTileCounts);
 	elementMap = generateTileMap(availableTileCounts);
 	town.innerHTML = ''
+	town.style.width = `${availableTileCounts.x * tileSize + availableTileCounts.x * pathWidth + pathWidth}px`
+	town.style.height = `${availableTileCounts.y * tileSize + availableTileCounts.y * pathWidth + pathWidth}px`
 	elementMap.forEach(e => {
 		town.append(createMapElement(e));
 	})
