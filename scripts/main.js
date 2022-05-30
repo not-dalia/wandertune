@@ -2,6 +2,7 @@ const pathWidth = 20;
 const tileSize = 200;
 let selectedNodes = [];
 let elementMap = [];
+let loadedImages = {}
 
 function getAvailableScreenSpace() {
 	return {
@@ -120,7 +121,7 @@ function generateTileMap(availableTileCounts) {
 				locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth),
 				type: 'tile',
 				orientation: 'v',
-				w: tileSize + pathWidth, h: tileSize + pathWidth,
+				w: tileSize + 2*pathWidth, h: tileSize + 2*pathWidth,
         // tileData: randomTile(tileSize)
 			})
 			
@@ -222,6 +223,20 @@ function createMapElement(item, i) {
 	return element;
 }
 
+function drawImageFromSrc(ctx, img, o) {
+	if (o.data.rotation) {
+		let translateDistanceX = o.data.width * pixelSize / 2
+		let translateDistanceY = o.data.height * pixelSize / 2
+		let rotationAngle = o.data.rotation * Math.PI/2
+		ctx.translate(translateDistanceX + o.x * pixelSize , translateDistanceY + o.y * pixelSize);
+		ctx.rotate(rotationAngle);
+		ctx.drawImage(img, -translateDistanceX, -translateDistanceY);
+		ctx.resetTransform()
+	} else {
+		ctx.drawImage(img, o.x * pixelSize, o.y * pixelSize);
+	}
+}
+
 function drawObjectInOrder(objectKeys, objectList, ctx) {
 	if (objectKeys.length <= 0) return;
 	let o = objectList[objectKeys[0]];
@@ -229,25 +244,24 @@ function drawObjectInOrder(objectKeys, objectList, ctx) {
 		let newKeys = [...objectKeys]
 		newKeys.splice(0, 1)
 		drawObjectInOrder(newKeys, objectList, ctx)
+		return
 	}
-	let img = new Image();
-	img.onload = function() {
-		if (o.data.rotation) {
-			let translateDistanceX = o.data.width * pixelSize / 2
-			let translateDistanceY = o.data.height * pixelSize / 2
-			let rotationAngle = o.data.rotation * Math.PI/2
-			ctx.translate(translateDistanceX + o.x * pixelSize , translateDistanceY + o.y * pixelSize);
-			ctx.rotate(rotationAngle);
-			ctx.drawImage(img, -translateDistanceX, -translateDistanceY);
-			ctx.resetTransform()
-		} else {
-			ctx.drawImage(img, o.x * pixelSize, o.y * pixelSize);
-		}
+	if (!loadedImages[o.data.src]) {
+		let img = new Image();
+		img.onload = function() {
+			loadedImages[o.data.src] = img
+			drawImageFromSrc(ctx, img, o)
+			let newKeys = [...objectKeys]
+			newKeys.splice(0, 1)
+			drawObjectInOrder(newKeys, objectList, ctx)
+		};
+		img.src = o.data.src;
+	} else {
+		drawImageFromSrc(ctx, loadedImages[o.data.src], o)
 		let newKeys = [...objectKeys]
 		newKeys.splice(0, 1)
 		drawObjectInOrder(newKeys, objectList, ctx)
-	};
-	img.src = o.data.src;
+	}
 }
 
 function drawTiles() {

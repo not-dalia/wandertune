@@ -2,17 +2,62 @@ const pixelSize = 4;
 const directions = ['u', 'r', 'd', 'l']
 let currentSeason = 'spring'
 
-function tree(type) {
+function point(x, y, color) {
+  return {
+    x,
+    y,
+    color
+  }
+}
+
+function tree(type, ext = 'png') {
+  let boundary = {}
+  let width;
+  switch (type) {
+    case 'tree_1':
+    boundary = {
+      x: -1,
+      y: 2,
+      w: 22,
+      h: 18
+    }
+    break;
+    case 'tree_2':
+    boundary = {
+      x: 4,
+      y: 14,
+      w: 12,
+      h: 6
+    }
+    break;
+    case 'tree_3':
+    width = 76
+    boundary = {
+      x: 2,
+      y: 4,
+      w: 16,
+      h: 16
+    }
+    break;
+    case 'tree_4':
+    boundary = {
+      x: -1,
+      y: 4,
+      w: 22,
+      h: 16
+    }
+    break;
+  }
   return {
     type,
-    src: `tiles/forest/${type}.png`,
-    width: 52 / pixelSize,
-    height: 52 / pixelSize,
+    src: `tiles/forest/${type}.${ext}`,
+    width: (width || 80) / pixelSize,
+    height: 80 / pixelSize,
     boundary: {
-      x: 4,
-      y: 6,
-      w: 5,
-      h: 4
+      x: 7,
+      y: 14,
+      w: 6,
+      h: 6
     },
     shadow: `tiles/forest/shadow.png`
   }
@@ -31,11 +76,11 @@ function river(type, direction) {
       } else {
         rotation = getRandomInt(2) * 2
       }
-      exitDirection = directions[(directions.indexOf(direction) + 2)%4]
+      exitDirection = directions[(directions.indexOf(direction) + 2) % 4]
       break;
     case 'bend':
-      rotation = (directions.indexOf(direction) - getRandomInt(2))%4
-      exitDirection = (directions.indexOf(direction) == rotation) ? directions[(directions.indexOf(direction) + 1)%4] :  directions[(directions.indexOf(direction) - 1) < 0 ? 3 : directions.indexOf(direction) - 1]
+      rotation = (directions.indexOf(direction) - getRandomInt(2)) % 4
+      exitDirection = (directions.indexOf(direction) == rotation) ? directions[(directions.indexOf(direction) + 1) % 4] : directions[(directions.indexOf(direction) - 1) < 0 ? 3 : directions.indexOf(direction) - 1]
       break;
     case 'lake':
       // rotation = directions.indexOf(direction)
@@ -79,7 +124,7 @@ function getPathRow(path) {
       }
     }
   });
-  return [ ...(new Array(getRandomInt(path.max_w - pathWidth))), ...rowPoints];
+  return [...(new Array(getRandomInt(path.max_w - pathWidth))), ...rowPoints];
 }
 
 function createPath(tileSize, path) {
@@ -156,21 +201,23 @@ function createPath(tileSize, path) {
         type: 'path',
         x: ex,
         y: 0 - Math.round(pathRow.length / 2) + i,
-        data: { ...p }
+        data: {
+          ...p
+        }
       }
       if (pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] && pointsMap[`${pathPoint1.x}_${pathPoint1.y}`].data.type == 'fill') return
-      if (pathPoint1.y >= 0) pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] = pathPoint1
+      if (pathPoint1.y >= 0 && pathPoint1.y < 10) pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] = pathPoint1
 
       let pathPoint2 = {
         type: 'path',
         x: ex,
-        y: tileSize - Math.round(pathRow.length / 2) + i,
-        data: { ...p }
+        y: tileSize - Math.round(pathRow.length / 2) + i - 1,
+        data: {
+          ...p
+        }
       }
       if (pointsMap[`${pathPoint2.x}_${pathPoint2.y}`] && pointsMap[`${pathPoint2.x}_${pathPoint2.y}`].data.type == 'fill') return
-      if (pathPoint1.y <= tileSize) pointsMap[`${pathPoint2.x}_${pathPoint2.y}`] = pathPoint2
-
-      
+      if (pathPoint1.y <= tileSize - 2 && pathPoint1.y > -1) pointsMap[`${pathPoint2.x}_${pathPoint2.y - 1}`] = pathPoint2
     })
   }
 
@@ -193,28 +240,33 @@ function createPath(tileSize, path) {
         type: 'path',
         x: 0 - Math.round(pathRow.length / 2) + i,
         y: ey,
-        data: { ...p }
+        data: {
+          ...p
+        }
       }
       if (pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] && pointsMap[`${pathPoint1.x}_${pathPoint1.y}`].data.type == 'fill') return
-      if (pathPoint1.x >= 0) pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] = pathPoint1
+      if (pathPoint1.x >= 0 && pathPoint1.x < 3) pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] = pathPoint1
 
       let pathPoint2 = {
         type: 'path',
         x: tileSize - Math.round(pathRow.length / 2) + i,
         y: ey,
-        data: { ...p }
+        data: {
+          ...p
+        }
       }
       if (pointsMap[`${pathPoint2.x}_${pathPoint2.y}`] && pointsMap[`${pathPoint2.x}_${pathPoint2.y}`].data.type == 'fill') return
-      if (pathPoint1.x <= tileSize) pointsMap[`${pathPoint2.x}_${pathPoint2.y}`] = pathPoint2
+      if (pathPoint2.x <= tileSize && pathPoint2.x > 47) pointsMap[`${pathPoint2.x}_${pathPoint2.y}`] = pathPoint2
 
-      
+
     })
   }
   return pointsMap;
 }
 
 function getTreeQuarter(tileQuarter, trees, treeMap, offsetX = 0, offsetY = 0) {
-  let treeCount = getRandomInt(20) + 24;
+  // let treeCount = 1 ;
+  let treeCount = getRandomInt(5) + 5;
   for (let t = 0; t < treeCount; t++) {
     let tree = trees[getRandomInt(trees.length)];
     let tx = getRandomInt(tileQuarter - (tree.boundary.x + tree.boundary.w)) + 2 + offsetX;
@@ -232,7 +284,9 @@ function getTreeQuarter(tileQuarter, trees, treeMap, offsetX = 0, offsetY = 0) {
       type: 'tree',
       x: tx,
       y: ty,
-      data: { ...tree }
+      data: {
+        ...tree
+      }
     }
     treeMap[`${treePoint.x}_${treePoint.y}`] = treePoint
     for (let tbx = treeBoundaryX[0]; tbx <= treeBoundaryX[1]; tbx++) {
@@ -258,14 +312,23 @@ function getTreeShadows(treeMap) {
     let t = treeMap[k];
     if (t.type != 'tree') return;
     let boundingBox = {
-      x: t.x - 3,
-      w: 9,
-      y: t.y + t.data.height/2 - 1,
-      h: 4
+      x: t.x - (t.data.width - ( t.data.width - 4)) + 1,
+      w: t.data.width - 4,
+      y: t.y + (t.data.height - 6) - 4,
+      h: 8
     }
-    for (let sx = boundingBox.x; sx < boundingBox.x + boundingBox.w; sx++) {
-      for (let sy = boundingBox.y; sy < boundingBox.y + boundingBox.h; sy++) {
-        if ((sx == boundingBox.x || sx == boundingBox.x + boundingBox.w - 1) && (sy == boundingBox.y || sy == boundingBox.y + boundingBox.h - 1)) continue;
+    let xRows = new Array(boundingBox.h).fill(0).map((e, i) => {
+      if (i >= boundingBox.h / 2) {
+        return boundingBox.w - (i - boundingBox.h / 2) * 2
+      } else {
+        return boundingBox.w - ((boundingBox.h / 2 - (i + 1))) * 2
+      }
+    })
+    for (let sy = boundingBox.y; sy < boundingBox.y + boundingBox.h; sy++) {
+      for (let sx = boundingBox.x; sx < boundingBox.x + boundingBox.w; sx++) {
+        // if ((sx == boundingBox.x || sx == boundingBox.x + boundingBox.w - 1) && (sy == boundingBox.y || sy == boundingBox.y + boundingBox.h - 1)) continue;
+        let missingCorner = (boundingBox.w - xRows[sy - boundingBox.y]) / 2
+        if (sx - boundingBox.x < missingCorner || sx - boundingBox.x >= missingCorner + xRows[sy - boundingBox.y]) continue;
         shadowMap[`${sx}_${sy}`] = {
           type: 'shadow',
           x: sx,
@@ -290,23 +353,26 @@ function createTrees(tileSize, trees, boundary) {
   // getTreeQuarter(tileQuarter, trees, treeMap, tileQuarter + boundary, tileQuarter + boundary);
 
 
-  return {treeMap, shadowMap};
+  return {
+    treeMap,
+    shadowMap
+  };
 }
 
-function createArtifacts(tileSize, artifacts, artifactColor, countMin, countRand) {
+function createArtifacts(tileSize, artifacts, countMin, countRand) {
   let artifactMap = {};
   let artifactCount = getRandomInt(countRand) + countMin;
   for (let t = 0; t < artifactCount; t++) {
     let artifact = artifacts[getRandomInt(artifacts.length)];
     let tx = getRandomInt(tileSize - 12) + 6;
     let ty = getRandomInt(tileSize - 12) + 6;
-    artifact.forEach(p => {
+    artifact.points.forEach(p => {
       let a = {
         type: 'artifact',
-        x: tx + p[0],
-        y: ty + p[1],
+        x: tx + p.x,
+        y: ty + p.y,
         data: {
-          color: artifactColor
+          color: artifact.colors[p.color || 0]
         }
       }
 
@@ -334,7 +400,7 @@ function createBridges(tileSize, direction) {
       }
     })
   }
-  if (direction.enter == 'u' || direction.exit == 'u')  {
+  if (direction.enter == 'u' || direction.exit == 'u') {
     rotation = 0
     bridges.push({
       type: 'bridge',
@@ -358,33 +424,137 @@ function createRiver(type, direction) {
     type: 'river',
     x: pathWidth / 4,
     y: pathWidth / 4,
-    data: { ...riverData }
+    data: {
+      ...riverData
+    }
   }
-  return { riverMap: [riverPoint] };
+  return {
+    riverMap: [riverPoint]
+  };
+}
+
+const artifactDefinitions = {
+  'dot_b': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 0), point(0, 1), point(1, 0), point(1, 1)
+    ]
+  },
+  'dot_s': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 0)
+    ]
+  },
+  'flower_1': {
+    colors: ['#a3c89b', '#d9682f'],
+    points: [
+      point(1, 0), point(0, 1), point(1, 1, 1), point(2, 1), point(1, 2)
+    ]
+  },
+  'grass_1': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 2), point(2, 2), point(2, 1), point(2, 0), point(4, 2), point(4, 1)
+    ]
+  },
+  'grass_2': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 1), point(1, 2), point(2, 0), point(2, 1), point(2, 2), point(3, 2), point(4, 1)
+    ]
+  },
+  'grass_3': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 2), point(1, 0), point(2, 1), point(2, 2)
+    ]
+  },
+  'grass_4': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 0), point(0, 1), point(0, 2), point(2, 2), point(2, 1)
+    ]
+  },
+  'grass_5': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 0), point(0, 1), point(0, 2), point(2, 2), point(2, 1)
+    ]
+  },
+  'grass_6': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 0), point(1, 1), point(1, 2), point(3, 0), point(3, 1), point(3, 2), point(4, 2), point(5, 1)
+    ]
+  }
+}
+
+function artifact(type, colors = []) {
+  let artifact = {
+    ...artifactDefinitions[type],
+    type
+  }
+  artifact.colors = [...artifactDefinitions[type].colors]
+  colors.forEach((c, i) => {
+    artifact.colors[i] = c
+  })
+  return artifact
 }
 
 const tileDefinitions = {
-	forest: {
+  forest: {
     seasons: {
       summer: {
-        trees: [ tree('tree_1'), tree('tree_2'), tree('tree_3')],
+        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
         color: '#7fb76f',
         artifactColor: '#a3c89b',
+        artifacts: [
+          // artifact('dot_b', ['#a3c89b']),
+          artifact('grass_2', ['#a3c89b']),
+          artifact('grass_3', ['#a3c89b']),
+          artifact('grass_4', ['#a3c89b']),
+          artifact('grass_5', ['#a3c89b']),
+          artifact('grass_6', ['#a3c89b']),
+        ]
       },
       spring: {
-        trees: [ tree('tree_1'), tree('tree_4'), tree('tree_5')],
+        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
         color: '#71c62b',
         artifactColor: '#96e057',
+        artifacts: [
+          artifact('grass_4', ['#96e057']),
+          artifact('grass_6', ['#96e057']),
+          artifact('flower_1', ['#ffffff']),
+          artifact('flower_1', ['#ffffff', '#FFD700']),
+          artifact('flower_1', ['#DB7093', '#FFD700']),
+        ]
       },
       autumn: {
-        trees: [ tree('tree_6'), tree('tree_7'), tree('tree_8')],
+        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
         color: '#b0b964',
         artifactColor: '#c6d087',
+        artifacts: [
+          // artifact('dot_b', ['#c6d087']),
+          artifact('grass_2', ['#c6d087']),
+          artifact('grass_3', ['#c6d087']),
+          artifact('grass_4', ['#c6d087']),
+          artifact('grass_5', ['#c6d087']),
+          artifact('grass_6', ['#c6d087']),
+        ]
       },
       winter: {
-        trees: [ tree('tree_3'), tree('tree_9'), tree('tree_10')],
+        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
         color: '#f0f8ff',
         artifactColor: '#bdecff',
+        artifacts: [
+          artifact('dot_b', ['#bdecff']),
+          artifact('grass_2', ['#bdecff']),
+          artifact('grass_3', ['#bdecff']),
+          artifact('grass_4', ['#bdecff']),
+          artifact('grass_5', ['#bdecff']),
+          artifact('grass_6', ['#bdecff']),
+        ]
       },
     },
     path: {
@@ -396,19 +566,6 @@ const tileDefinitions = {
         w: 6
       }
     },
-    artifacts: [
-      // [[0, 0], [1, 1], [2, 0], [3, 1]],
-      [[0, 0], [0, 1], [1, 0], [1, 1]],
-      // [[0, 1], [1, 0], [2, 1]],
-      [[0, 0]],
-      [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]],
-      // [[1, 0], [1, 1], [2, 1], [0, 2]],
-      // [[0, 2], [2, 2], [2, 1], [2, 0], [4, 2], [4, 1]],
-      [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2], [3,2], [4, 1]],
-      [[0, 2], [1, 0], [2, 1], [2, 2]],
-      [[0, 0] [0, 1], [0, 2], [2, 2], [2, 1]],
-      [[0,0], [1,1], [1,2], [3,0], [3,1], [3,2], [4,2], [5,1]]
-    ],
     createTile: (realTileSize, season) => {
       if (!season) {
         let seasons = Object.keys(tileDefinitions.forest.seasons);
@@ -416,8 +573,11 @@ const tileDefinitions = {
       }
       let tileSize = (realTileSize / pixelSize);
       let pathMap = createPath(tileSize, tileDefinitions.forest.path);
-      let {treeMap: objectsMap, shadowMap} = createTrees(tileSize, tileDefinitions.forest.seasons[season].trees, tileDefinitions.forest.path.boundary.w);
-      let artifactMap = createArtifacts(tileSize, tileDefinitions.forest.artifacts, tileDefinitions.forest.seasons[season].artifactColor, 35, 30);
+      let {
+        treeMap: objectsMap,
+        shadowMap
+      } = createTrees(tileSize, tileDefinitions.forest.seasons[season].trees, tileDefinitions.forest.path.boundary.w);
+      let artifactMap = createArtifacts(tileSize, tileDefinitions.forest.seasons[season].artifacts, 35, 30);
       return {
         type: 'forest',
         season: season,
@@ -428,24 +588,55 @@ const tileDefinitions = {
         artifactMap
       }
     }
-	},
+  },
   river: {
     seasons: {
       summer: {
         color: '#7fb76f',
         artifactColor: '#a3c89b',
+        artifacts: [
+          // artifact('dot_b', ['#a3c89b']),
+          artifact('grass_2', ['#a3c89b']),
+          artifact('grass_3', ['#a3c89b']),
+          artifact('grass_4', ['#a3c89b']),
+          artifact('grass_5', ['#a3c89b']),
+          artifact('grass_6', ['#a3c89b']),
+        ]
       },
       spring: {
         color: '#71c62b',
         artifactColor: '#96e057',
+        artifacts: [
+          artifact('grass_4', ['#96e057']),
+          artifact('grass_6', ['#96e057']),
+          artifact('flower_1', ['#ffffff']),
+          artifact('flower_1', ['#ffffff', '#FFD700']),
+          artifact('flower_1', ['#DB7093', '#FFD700']),
+        ]
       },
       autumn: {
         color: '#b0b964',
         artifactColor: '#c6d087',
+        artifacts: [
+          // artifact('dot_b', ['#c6d087']),
+          artifact('grass_2', ['#c6d087']),
+          artifact('grass_3', ['#c6d087']),
+          artifact('grass_4', ['#c6d087']),
+          artifact('grass_5', ['#c6d087']),
+          artifact('grass_6', ['#c6d087']),
+        ]
       },
       winter: {
         color: '#f0f8ff',
         artifactColor: '#bdecff',
+        artifacts: [
+          artifact('dot_b', ['#bdecff']),
+          artifact('grass_2', ['#bdecff']),
+          artifact('grass_3', ['#bdecff']),
+          artifact('grass_4', ['#bdecff']),
+          artifact('grass_5', ['#bdecff']),
+          artifact('grass_6', ['#bdecff']),
+        ]
       },
     },
     riverPath: ['straight', 'bend', 'lake'],
@@ -459,19 +650,6 @@ const tileDefinitions = {
         w: 6
       }
     },
-    artifacts: [
-      // [[0, 0], [1, 1], [2, 0], [3, 1]],
-      [[0, 0], [0, 1], [1, 0], [1, 1]],
-      // [[0, 1], [1, 0], [2, 1]],
-      [[0, 0]],
-      [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]],
-      // [[1, 0], [1, 1], [2, 1], [0, 2]],
-      // [[0, 2], [2, 2], [2, 1], [2, 0], [4, 2], [4, 1]],
-      [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2], [3,2], [4, 1]],
-      [[0, 2], [1, 0], [2, 1], [2, 2]],
-      [[0, 0] [0, 1], [0, 2], [2, 2], [2, 1]],
-      [[0,0], [1,1], [1,2], [3,0], [3,1], [3,2], [4,2], [5,1]]
-    ],
     createTile: (realTileSize, season, direction, type) => {
       if (!season) {
         let seasons = Object.keys(tileDefinitions.forest.seasons);
@@ -485,9 +663,11 @@ const tileDefinitions = {
       }
       let tileSize = (realTileSize / pixelSize);
       let pathMap = createPath(tileSize, tileDefinitions.river.path);
-      let artifactMap = createArtifacts(tileSize, tileDefinitions.river.artifacts, tileDefinitions.river.seasons[season].artifactColor, 20, 10);
-      let {riverMap: objectsMap} = createRiver(type, direction);
-      let bridges = createBridges(tileSize, objectsMap[0].data.direction )
+      let artifactMap = createArtifacts(tileSize, tileDefinitions.river.seasons[season].artifacts, 20, 10);
+      let {
+        riverMap: objectsMap
+      } = createRiver(type, direction);
+      let bridges = createBridges(tileSize, objectsMap[0].data.direction)
       return {
         type: 'river',
         riverType: type,
@@ -499,7 +679,7 @@ const tileDefinitions = {
         bridges
       }
     }
-	}
+  }
 }
 
 function randomTile(tileSize) {

@@ -53,7 +53,8 @@ body {
 }
 .node {
   color: #ffa500;
-  background: fuchsia;
+  background: transparent;
+  /* background: fuchsia; */
   /* background: repeating-linear-gradient(
     45deg,
     transparent,
