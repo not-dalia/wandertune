@@ -339,6 +339,41 @@ function getTreeShadows(treeMap) {
   return shadowMap
 }
 
+function getStationShadow(s) {
+  let shadowMap = {}
+  console.log(s)
+  let boundingBox = {
+    x: s.x + 1,
+    w: 39,
+    y: s.y + 8,
+    h: 25
+  }
+  if (s.data.direction.enter == 'u') {
+    boundingBox = {
+      x: s.x + 1,
+      w: 39,
+      y: s.y + 16,
+      h: 25
+    }
+  }
+  for (let sy = boundingBox.y; sy < boundingBox.y + boundingBox.h; sy++) {
+    for (let sx = boundingBox.x; sx < boundingBox.x + boundingBox.w; sx++) {
+      if ((sx == boundingBox.x || sx == boundingBox.x + boundingBox.w - 1) && (sy == boundingBox.y || sy == boundingBox.y + boundingBox.h - 1)) continue;
+      // let missingCorner = (boundingBox.w - xRows[sy - boundingBox.y]) / 2
+      // if (sx - boundingBox.x < missingCorner || sx - boundingBox.x >= missingCorner + xRows[sy - boundingBox.y]) continue;
+      shadowMap[`${sx}_${sy}`] = {
+        type: 'shadow',
+        x: sx,
+        y: sy,
+        data: {
+        }
+      }
+    }
+  }
+
+  return shadowMap
+}
+
 function createTrees(tileSize, trees, boundary) {
   let treeMap = {};
   let tileQuarter = (tileSize - 2 * boundary) / 2;
@@ -440,8 +475,12 @@ function createTrainStation(direction) {
       ...trainData
     }
   }
+
+  let shadowMap = getStationShadow(trainPoint);
+
   return {
-    trainMap: [trainPoint]
+    trainMap: [trainPoint],
+    shadowMap
   };
 }
 
@@ -815,7 +854,8 @@ const tileDefinitions = {
       let pathMap = createPath(tileSize, tileDefinitions.station.path);
       let artifactMap = createArtifacts(tileSize, tileDefinitions.station.seasons[season].artifacts, 30, 30);
       let {
-        trainMap: objectsMap
+        trainMap: objectsMap,
+        shadowMap
       } = createTrainStation(direction);
       return {
         type: 'station',
@@ -824,6 +864,7 @@ const tileDefinitions = {
         pathMap,
         objectsMap,
         artifactMap,
+        shadowMap
       }
     }
   }
