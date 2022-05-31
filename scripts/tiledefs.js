@@ -527,7 +527,7 @@ function artifact(type, colors = []) {
 }
 
 
-let currentSeason = 'spring'
+let currentSeason = ['spring', 'summer', 'autumn', 'winter'][getRandomInt(4)]
 const tileDefinitions = {
   forest: {
     seasons: {
