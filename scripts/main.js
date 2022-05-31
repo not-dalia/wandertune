@@ -367,6 +367,39 @@ function createRiverPath(elementMap, availableTileCounts) {
 
 }
 
+
+function createTrainStationTile(elementMap, availableTileCounts) {
+	let c = 12;
+
+	do {
+		c--;
+
+		let side = ['x', 'y'][getRandomInt(2)]
+		let coordinates = {
+			x: side == 'x' ? getRandomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][getRandomInt(2)],
+			y: side == 'y' ? getRandomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][getRandomInt(2)],
+		}
+		let edgePoint = {
+			x: coordinates.x * 4 + 1,
+			y: coordinates.y * 4 + 1,
+		}
+
+		let element = document.querySelector(`#n${edgePoint.x}_${edgePoint.y}`)
+		let elementIndex = element.dataset.elementIndex;
+		let elementData = elementMap[elementIndex]
+		if (elementData.tileData) continue;
+		let direction;
+		if (edgePoint.x == 1) direction = 'l'
+		else if (edgePoint.x == (availableTileCounts.x - 1) * 4 + 1) direction = 'r'
+		else if (edgePoint.y == 1) direction = 'u'
+		else direction = 'd'
+
+		elementData.tileData = trainStart(tileSize, direction)
+		console.log(elementData);
+		break;
+	} while (c >= 0)
+}
+
 function start() {
 	const town = document.querySelector('.town');
 	let availableSpace = getAvailableScreenSpace();
@@ -381,6 +414,7 @@ function start() {
 		town.append(createMapElement(e, i));
 	})
 	createRiverPath(elementMap, availableTileCounts)
+	createTrainStationTile(elementMap, availableTileCounts)
 	elementMap.forEach((e, i) => {
 		if (e.tileData) return
 		e.tileData = randomTile(tileSize)

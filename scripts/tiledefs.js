@@ -1,6 +1,5 @@
 const pixelSize = 4;
 const directions = ['u', 'r', 'd', 'l']
-let currentSeason = 'spring'
 
 function point(x, y, color) {
   return {
@@ -11,40 +10,29 @@ function point(x, y, color) {
 }
 
 function tree(type, ext = 'png') {
-  let boundary = {}
+  let boundary = {
+    x: 7,
+    y: 14,
+    w: 6,
+    h: 6
+  }
   let width;
   switch (type) {
-    case 'tree_1':
-    boundary = {
-      x: -1,
-      y: 2,
-      w: 22,
-      h: 18
-    }
-    break;
-    case 'tree_2':
+    case 'tree': case 'tree_1': case 'tree_2': case 'tree_3': case 'tree_4': case 'tree_5': case 'tree_6': case 'tree_7': case 'tree_8': case 'tree_9': case 'tree_10': case 'tree_11':
     boundary = {
       x: 4,
-      y: 14,
+      y: 12,
       w: 12,
-      h: 6
+      h: 8
     }
     break;
-    case 'tree_3':
+    case 'tree_tall': case 'tree_tall_1': case 'tree_tall_2': case 'tree_tall_3':
     width = 76
     boundary = {
       x: 2,
-      y: 4,
-      w: 16,
-      h: 16
-    }
-    break;
-    case 'tree_4':
-    boundary = {
-      x: -1,
-      y: 4,
-      w: 22,
-      h: 16
+      y: 12,
+      w: 15,
+      h: 8
     }
     break;
   }
@@ -53,12 +41,7 @@ function tree(type, ext = 'png') {
     src: `tiles/forest/${type}.${ext}`,
     width: (width || 80) / pixelSize,
     height: 80 / pixelSize,
-    boundary: {
-      x: 7,
-      y: 14,
-      w: 6,
-      h: 6
-    },
+    boundary,
     shadow: `tiles/forest/shadow.png`
   }
 }
@@ -102,6 +85,19 @@ function river(type, direction) {
       exit: exitDirection
     },
     rotation
+  }
+}
+
+function station(direction) {
+  let src = `tiles/station/station_${direction}.png`;
+
+  return {
+    src,
+    width: 200 / pixelSize,
+    height: 200 / pixelSize,
+    direction: {
+      enter: direction,
+    }
   }
 }
 
@@ -266,7 +262,7 @@ function createPath(tileSize, path) {
 
 function getTreeQuarter(tileQuarter, trees, treeMap, offsetX = 0, offsetY = 0) {
   // let treeCount = 1 ;
-  let treeCount = getRandomInt(5) + 5;
+  let treeCount = getRandomInt(10) + 15;
   for (let t = 0; t < treeCount; t++) {
     let tree = trees[getRandomInt(trees.length)];
     let tx = getRandomInt(tileQuarter - (tree.boundary.x + tree.boundary.w)) + 2 + offsetX;
@@ -433,7 +429,29 @@ function createRiver(type, direction) {
   };
 }
 
+function createTrainStation(direction) {
+  let trainData = station(direction)
+
+  let trainPoint = {
+    type: 'river',
+    x: pathWidth / 4,
+    y: pathWidth / 4,
+    data: {
+      ...trainData
+    }
+  }
+  return {
+    trainMap: [trainPoint]
+  };
+}
+
 const artifactDefinitions = {
+  'zigzag_1': {
+    colors: ['#a3c89b'],
+    points: [
+      point(0, 0), point(1, 1), point(2, 0), point(3, 1)
+    ]
+  },
   'dot_b': {
     colors: ['#a3c89b'],
     points: [
@@ -450,6 +468,12 @@ const artifactDefinitions = {
     colors: ['#a3c89b', '#d9682f'],
     points: [
       point(1, 0), point(0, 1), point(1, 1, 1), point(2, 1), point(1, 2)
+    ]
+  },
+  'leaf_1': {
+    colors: ['#a3c89b', '#d9682f'],
+    points: [
+      point(-1, 0), point(0,0), point(0, 1), point(1, -1)
     ]
   },
   'grass_1': {
@@ -502,36 +526,47 @@ function artifact(type, colors = []) {
   return artifact
 }
 
+
+let currentSeason = 'spring'
 const tileDefinitions = {
   forest: {
     seasons: {
       summer: {
-        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
-        color: '#7fb76f',
+        trees: [tree('tree_2'), tree('tree_1'), tree('tree_3')],
+        color: '#71c62b',
         artifactColor: '#a3c89b',
         artifacts: [
           // artifact('dot_b', ['#a3c89b']),
-          artifact('grass_2', ['#a3c89b']),
-          artifact('grass_3', ['#a3c89b']),
-          artifact('grass_4', ['#a3c89b']),
-          artifact('grass_5', ['#a3c89b']),
-          artifact('grass_6', ['#a3c89b']),
+          artifact('grass_2', ['#96e057']),
+          artifact('grass_3', ['#96e057']),
+          artifact('grass_4', ['#96e057']),
+          artifact('grass_5', ['#96e057']),
+          artifact('grass_6', ['#96e057']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('flower_1', ['#FFD700']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
         ]
       },
       spring: {
-        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
-        color: '#71c62b',
+        trees: [tree('tree_1'), tree('tree_1'), tree('tree_1'), tree('tree_4')],
+        // trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
+        color: '#7fb76f',
         artifactColor: '#96e057',
         artifacts: [
-          artifact('grass_4', ['#96e057']),
-          artifact('grass_6', ['#96e057']),
+          artifact('grass_4', ['#a3c89b']),
+          artifact('grass_6', ['#a3c89b']),
           artifact('flower_1', ['#ffffff']),
           artifact('flower_1', ['#ffffff', '#FFD700']),
           artifact('flower_1', ['#DB7093', '#FFD700']),
         ]
       },
       autumn: {
-        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
+        trees: [tree('tree_6'), tree('tree_7'), tree('tree_8'), tree('tree_11')],
         color: '#b0b964',
         artifactColor: '#c6d087',
         artifacts: [
@@ -541,10 +576,13 @@ const tileDefinitions = {
           artifact('grass_4', ['#c6d087']),
           artifact('grass_5', ['#c6d087']),
           artifact('grass_6', ['#c6d087']),
+          artifact('leaf_1', ['#CD853F']),
+          artifact('dot_s', ['#CD853F']),
+          artifact('zigzag_1', ['#CD853F']),
         ]
       },
       winter: {
-        trees: [tree('tree_4'), tree('tree_1'), tree('tree_3')],
+        trees: [tree('tree_tall_1'), tree('tree_tall_2'), tree('tree_tall_3')],
         color: '#f0f8ff',
         artifactColor: '#bdecff',
         artifacts: [
@@ -592,23 +630,31 @@ const tileDefinitions = {
   river: {
     seasons: {
       summer: {
-        color: '#7fb76f',
+        color: '#71c62b',
         artifactColor: '#a3c89b',
         artifacts: [
           // artifact('dot_b', ['#a3c89b']),
-          artifact('grass_2', ['#a3c89b']),
-          artifact('grass_3', ['#a3c89b']),
-          artifact('grass_4', ['#a3c89b']),
-          artifact('grass_5', ['#a3c89b']),
-          artifact('grass_6', ['#a3c89b']),
+          artifact('grass_2', ['#96e057']),
+          artifact('grass_3', ['#96e057']),
+          artifact('grass_4', ['#96e057']),
+          artifact('grass_5', ['#96e057']),
+          artifact('grass_6', ['#96e057']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('flower_1', ['#FFD700']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
         ]
       },
       spring: {
-        color: '#71c62b',
+        color: '#7fb76f',
         artifactColor: '#96e057',
         artifacts: [
-          artifact('grass_4', ['#96e057']),
-          artifact('grass_6', ['#96e057']),
+          artifact('grass_4', ['#a3c89b']),
+          artifact('grass_6', ['#a3c89b']),
           artifact('flower_1', ['#ffffff']),
           artifact('flower_1', ['#ffffff', '#FFD700']),
           artifact('flower_1', ['#DB7093', '#FFD700']),
@@ -622,8 +668,13 @@ const tileDefinitions = {
           artifact('grass_2', ['#c6d087']),
           artifact('grass_3', ['#c6d087']),
           artifact('grass_4', ['#c6d087']),
+          artifact('grass_4', ['#CD853F']),
           artifact('grass_5', ['#c6d087']),
-          artifact('grass_6', ['#c6d087']),
+          artifact('grass_5', ['#CD853F']),
+          artifact('grass_6', ['#CD853F']),
+          artifact('leaf_1', ['#CD853F']),
+          artifact('dot_s', ['#CD853F']),
+          artifact('zigzag_1', ['#CD853F']),
         ]
       },
       winter: {
@@ -652,7 +703,7 @@ const tileDefinitions = {
     },
     createTile: (realTileSize, season, direction, type) => {
       if (!season) {
-        let seasons = Object.keys(tileDefinitions.forest.seasons);
+        let seasons = Object.keys(tileDefinitions.river.seasons);
         season = seasons[getRandomInt(seasons.length)];
       }
       if (!type) {
@@ -672,11 +723,107 @@ const tileDefinitions = {
         type: 'river',
         riverType: type,
         season: season,
-        color: tileDefinitions.forest.seasons[season].color,
+        color: tileDefinitions.river.seasons[season].color,
         pathMap,
         objectsMap,
         artifactMap,
         bridges
+      }
+    }
+  },
+  station: {
+    seasons: {
+      summer: {
+        color: '#71c62b',
+        artifactColor: '#a3c89b',
+        artifacts: [
+          // artifact('dot_b', ['#a3c89b']),
+          artifact('grass_2', ['#96e057']),
+          artifact('grass_3', ['#96e057']),
+          artifact('grass_4', ['#96e057']),
+          artifact('grass_5', ['#96e057']),
+          artifact('grass_6', ['#96e057']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('dot_s', ['#FFD700']),
+          artifact('flower_1', ['#FFD700']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
+          artifact('dot_s', ['#FFFFFF']),
+        ]
+      },
+      spring: {
+        color: '#7fb76f',
+        artifactColor: '#96e057',
+        artifacts: [
+          artifact('grass_4', ['#a3c89b']),
+          artifact('grass_6', ['#a3c89b']),
+          artifact('flower_1', ['#ffffff']),
+          artifact('flower_1', ['#ffffff', '#FFD700']),
+          artifact('flower_1', ['#DB7093', '#FFD700']),
+        ]
+      },
+      autumn: {
+        color: '#b0b964',
+        artifactColor: '#c6d087',
+        artifacts: [
+          // artifact('dot_b', ['#c6d087']),
+          artifact('grass_2', ['#c6d087']),
+          artifact('grass_3', ['#c6d087']),
+          artifact('grass_4', ['#c6d087']),
+          artifact('grass_4', ['#CD853F']),
+          artifact('grass_5', ['#c6d087']),
+          artifact('grass_5', ['#CD853F']),
+          artifact('grass_6', ['#CD853F']),
+          artifact('leaf_1', ['#CD853F']),
+          artifact('dot_s', ['#CD853F']),
+          artifact('zigzag_1', ['#CD853F']),
+        ]
+      },
+      winter: {
+        color: '#f0f8ff',
+        artifactColor: '#bdecff',
+        artifacts: [
+          artifact('dot_b', ['#bdecff']),
+          artifact('grass_2', ['#bdecff']),
+          artifact('grass_3', ['#bdecff']),
+          artifact('grass_4', ['#bdecff']),
+          artifact('grass_5', ['#bdecff']),
+          artifact('grass_6', ['#bdecff']),
+        ]
+      },
+    },
+    path: {
+      min_w: 2,
+      max_w: 5,
+      color: '#d1a263',
+      stroke: '#edc487',
+      boundary: {
+        w: 6
+      }
+    },
+    createTile: (realTileSize, season, direction) => {
+      if (!season) {
+        let seasons = Object.keys(tileDefinitions.station.seasons);
+        season = seasons[getRandomInt(seasons.length)];
+      }
+      if (!direction) {
+        direction = directions[getRandomInt(directions.length)];
+      }
+      let tileSize = (realTileSize / pixelSize);
+      let pathMap = createPath(tileSize, tileDefinitions.station.path);
+      let artifactMap = createArtifacts(tileSize, tileDefinitions.station.seasons[season].artifacts, 30, 30);
+      let {
+        trainMap: objectsMap
+      } = createTrainStation(direction);
+      return {
+        type: 'station',
+        season: season,
+        color: tileDefinitions.station.seasons[season].color,
+        pathMap,
+        objectsMap,
+        artifactMap,
       }
     }
   }
@@ -691,4 +838,8 @@ function randomTile(tileSize) {
 
 function riverStart(tileSize, direction) {
   return tileDefinitions['river'].createTile(tileSize, currentSeason, direction, ['bend', 'straight'][getRandomInt(2)])
+}
+
+function trainStart(tileSize, direction) {
+  return tileDefinitions['station'].createTile(tileSize, currentSeason, direction)
 }
