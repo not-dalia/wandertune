@@ -374,6 +374,7 @@ class TileFactory {
     return new this._tileTypes[type]({
       direction,
       type: type,
+      subtype,
       season: this.season,
       tileSize: this.tileSize,
       pathWidth: this.pathWidth,
@@ -599,7 +600,6 @@ class RiverTile extends Tile {
     subtype
   }) {
     super();
-
     const seasonsData = {
       artifacts: {
         summer: [
@@ -711,7 +711,6 @@ class RiverTile extends Tile {
 
   createRiver = () => {
     let riverData = (new River(this.subtype, this.direction)).data
-    console.log(this.subtype)
     let riverPoint = {
       type: 'river',
       x: this.pathWidth,
@@ -858,7 +857,6 @@ function randomTile() {
 
 function riverStart(direction) {
   let type = ['bend', 'straight'][randomInt(2)];
-  console.log(`type: ${type}`)
   return tileFactory.make('river', direction, type);
 }
 
