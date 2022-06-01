@@ -332,6 +332,7 @@ function createRiverPath(elementMap, availableTileCounts) {
 	else direction = 'd'
 
 	elementData.tileData = riverStart(direction).data
+	console.log(elementData.tileData)
 	let canGenerateNextTile = true;
 	while (canGenerateNextTile) {
 		let riverData = elementMap[elementIndex].tileData.objectsMap[0].data
@@ -356,9 +357,10 @@ function createRiverPath(elementMap, availableTileCounts) {
 		}
 		element = document.querySelector(`#n${newPoint.x}_${newPoint.y}`)
 		if (elementMap[ element.dataset.elementIndex].tileData) {
-			console.log(direction)
+			console.log('lake')
 			elementMap[elementIndex].tileData = riverLake(riverData.direction.enter, 'lake').data
 		} else {
+			console.log('not lake')
 			elementIndex = element.dataset.elementIndex;
 			elementMap[elementIndex].tileData = riverStart(direction).data
 		}

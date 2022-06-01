@@ -371,7 +371,6 @@ class TileFactory {
   }
 
   make(type, direction, subtype) {
-    console.log(type)
     return new this._tileTypes[type]({
       direction,
       type: type,
@@ -712,7 +711,7 @@ class RiverTile extends Tile {
 
   createRiver = () => {
     let riverData = (new River(this.subtype, this.direction)).data
-  
+    console.log(this.subtype)
     let riverPoint = {
       type: 'river',
       x: this.pathWidth,
@@ -858,7 +857,9 @@ function randomTile() {
 }
 
 function riverStart(direction) {
-  return tileFactory.make('river', direction, ['bend', 'straight'][randomInt(2)]);
+  let type = ['bend', 'straight'][randomInt(2)];
+  console.log(`type: ${type}`)
+  return tileFactory.make('river', direction, type);
 }
 
 function riverLake(direction) {
