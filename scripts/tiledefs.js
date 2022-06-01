@@ -772,7 +772,6 @@ class BuildingsTile extends Tile {
         }
       }
     })
-    console.log(shadowMap)
     return shadowMap
   }
 }
@@ -1041,8 +1040,12 @@ class StationTile extends Tile {
   }
 }
 
-function randomTile() {
-  return tileFactory.make(['forest', 'buildings'][randomInt(2)]);
+function randomTile(probabilityCutoff) {
+  let probability = randomInt(100)
+  if (probability > probabilityCutoff)
+    return tileFactory.make('buildings');
+  else 
+    return tileFactory.make('forest');
 }
 
 function riverStart(direction) {

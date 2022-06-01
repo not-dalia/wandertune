@@ -415,9 +415,18 @@ function start() {
 	})
 	createRiverPath(elementMap, availableTileCounts)
 	createTrainStationTile(elementMap, availableTileCounts)
+	let townArea = {
+		x: randomInt(availableTileCounts.x),
+		y: randomInt(availableTileCounts.y)
+	}
+	console.log(`townArea: ${townArea.x},${townArea.y}`)
+	let radius = Math.max(2, randomInt(Math.max(townArea.x, availableTileCounts.x - townArea.x, townArea.y, availableTileCounts.y - townArea.y)))
+	console.log(`radius: ${radius}`)
+
 	elementMap.forEach((e, i) => {
 		if (e.type != 'tile' || e.tileData) return
-		e.tileData = randomTile().data
+		let distance = Math.pow((Math.pow(townArea.x - ((e.x - 1)/4), 2) + Math.pow(townArea.y - ((e.y - 1)/4), 2)),0.5)
+		e.tileData = randomTile(distance/radius * 100).data
 	})
 
   drawTiles();
