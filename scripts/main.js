@@ -1,4 +1,6 @@
-const pathWidth = 20;
+const pixelSize = 4;
+const currentSeason = ['spring', 'summer', 'autumn', 'winter'][randomInt(4)];
+const pathWidth = 40;
 const tileSize = 200;
 let selectedNodes = [];
 let elementMap = [];
@@ -279,20 +281,20 @@ function drawTiles() {
       Object.keys(item.tileData.pathMap).forEach(k => {
         let p = item.tileData.pathMap[k];
         ctx.fillStyle = p.data.color;
-        ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
+        ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
       })
 
 			item.tileData.artifactMap && Object.keys(item.tileData.artifactMap).forEach(k => {
         let p = item.tileData.artifactMap[k];
         ctx.fillStyle = p.data.color;
-        ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
+        ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
       })
 
 			ctx.globalAlpha = 0.3
 			item.tileData.shadowMap && Object.keys(item.tileData.shadowMap).forEach(k => {
         let p = item.tileData.shadowMap[k];
         ctx.fillStyle = 'black';
-        ctx.fillRect(pathWidth + p.x * pixelSize, pathWidth + p.y * pixelSize, pixelSize, pixelSize);
+        ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
       })
 
 			ctx.globalAlpha = 1
@@ -311,11 +313,10 @@ function drawTiles() {
 }
 
 function createRiverPath(elementMap, availableTileCounts) {
-	console.log(availableTileCounts)
-	let side = ['x', 'y'][getRandomInt(2)]
+	let side = ['x', 'y'][randomInt(2)]
 	let coordinates = {
-		x:  side == 'x' ? getRandomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][getRandomInt(2)],
-		y: side == 'y' ? getRandomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][getRandomInt(2)],
+		x:  side == 'x' ? randomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][randomInt(2)],
+		y: side == 'y' ? randomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][randomInt(2)],
 	}
 	let edgePoint = {
 		x: coordinates.x * 4 + 1,
@@ -330,9 +331,7 @@ function createRiverPath(elementMap, availableTileCounts) {
 	else if (edgePoint.y == 1) direction = 'u'
 	else direction = 'd'
 
-	elementData.tileData = riverStart(tileSize, direction)
-	console.log(elementData)
-
+	elementData.tileData = riverStart(direction).data
 	let canGenerateNextTile = true;
 	while (canGenerateNextTile) {
 		let riverData = elementMap[elementIndex].tileData.objectsMap[0].data
@@ -358,10 +357,10 @@ function createRiverPath(elementMap, availableTileCounts) {
 		element = document.querySelector(`#n${newPoint.x}_${newPoint.y}`)
 		if (elementMap[ element.dataset.elementIndex].tileData) {
 			console.log(direction)
-			elementMap[elementIndex].tileData = tileDefinitions['river'].createTile(tileSize, currentSeason, riverData.direction.enter, 'lake')
+			elementMap[elementIndex].tileData = riverLake(riverData.direction.enter, 'lake').data
 		} else {
 			elementIndex = element.dataset.elementIndex;
-			elementMap[elementIndex].tileData = riverStart(tileSize, direction)
+			elementMap[elementIndex].tileData = riverStart(direction).data
 		}
 	}
 
@@ -374,10 +373,10 @@ function createTrainStationTile(elementMap, availableTileCounts) {
 	do {
 		c--;
 
-		let side = ['x', 'y'][getRandomInt(2)]
+		let side = ['x', 'y'][randomInt(2)]
 		let coordinates = {
-			x: side == 'x' ? getRandomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][getRandomInt(2)],
-			y: side == 'y' ? getRandomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][getRandomInt(2)],
+			x: side == 'x' ? randomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][randomInt(2)],
+			y: side == 'y' ? randomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][randomInt(2)],
 		}
 		let edgePoint = {
 			x: coordinates.x * 4 + 1,
@@ -394,13 +393,14 @@ function createTrainStationTile(elementMap, availableTileCounts) {
 		else if (edgePoint.y == 1) direction = 'u'
 		else direction = 'd'
 
-		elementData.tileData = trainStart(tileSize, direction)
-		console.log(elementData);
+		elementData.tileData = trainStart(tileSize, direction).data
 		break;
 	} while (c >= 0)
 }
 
 function start() {
+	tileFactory.init(currentSeason, tileSize, pathWidth, pixelSize);
+
 	const town = document.querySelector('.town');
 	let availableSpace = getAvailableScreenSpace();
 	let availableTileCounts = calculateAvailableTiles(availableSpace);
@@ -416,8 +416,8 @@ function start() {
 	createRiverPath(elementMap, availableTileCounts)
 	createTrainStationTile(elementMap, availableTileCounts)
 	elementMap.forEach((e, i) => {
-		if (e.tileData) return
-		e.tileData = randomTile(tileSize)
+		if (e.type != 'tile' || e.tileData) return
+		e.tileData = randomTile().data
 	})
 
   drawTiles();
