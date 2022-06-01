@@ -280,48 +280,6 @@ class PathBuilder {
       })
     })
   
-    /* for (let ey = 0; ey < this.tileSize; ey++) {
-      let pathRow;
-      if (ey == 0) {
-        pathRow = this.getPathRow();
-      } else {
-        let newPathChance = randomInt(100);
-        if (newPathChance < 10) {
-          pathRow = this.getPathRow();
-        } else {
-          pathRow = lastPathRow
-        }
-      }
-      lastPathRow = [...pathRow]
-
-      //TODO: change how this works
-      pathRow.forEach((p, i) => {
-        if (!p) return;
-        let pathPoint1 = {
-          type: 'path',
-          x: 0 - Math.round(pathRow.length / 2) + i,
-          y: ey,
-          data: {
-            ...p
-          }
-        }
-        if (pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] && pointsMap[`${pathPoint1.x}_${pathPoint1.y}`].data.type == 'fill') return
-        if (pathPoint1.x >= 0 && pathPoint1.x < 3) pointsMap[`${pathPoint1.x}_${pathPoint1.y}`] = pathPoint1
-  
-        let pathPoint2 = {
-          type: 'path',
-          x: this.tileSize - Math.round(pathRow.length / 2) + i,
-          y: ey,
-          data: {
-            ...p
-          }
-        }
-        if (pointsMap[`${pathPoint2.x}_${pathPoint2.y}`] && pointsMap[`${pathPoint2.x}_${pathPoint2.y}`].data.type == 'fill') return
-        if (pathPoint2.x <= this.tileSize && pathPoint2.x > 47) pointsMap[`${pathPoint2.x}_${pathPoint2.y}`] = pathPoint2
-  
-  
-      })
-    } */
     return pointsMap;
   }
 
@@ -350,23 +308,6 @@ class PathBuilder {
       }
     });
     return rowPoints;
-      
-    /* let pathWidth = randomInt(this.maxW - this.minW) + this.minW;
-    let rowPoints = new Array(pathWidth).fill({}).map((_, i) => {
-      if ((i == 0 || i == pathWidth - 1) && this.stroke) {
-        return {
-          type: 'stroke',
-          color: this.stroke
-        }
-      } else {
-        return {
-          type: 'fill',
-          color: this.color
-        }
-      }
-    });
-    let padding = new Array(randomInt(this.maxW - pathWidth))
-    return [padding, rowPoints]; */
   }
 }
 
@@ -555,7 +496,7 @@ class ForestTile extends Tile {
 
   createTile = () => {
     this.pathMap = this.pathBuilder.makePath();
-    this.objectsMap = this.createTrees(this.tileSize - 2, 1, 1);
+    this.objectsMap = this.createTrees(this.tileSize - 4, 1, 1);
     this.shadowMap = this.createShadows()
     this.artifactMap = this.createArtifacts(35, 30);
   }
