@@ -1,6 +1,6 @@
 const pixelSize = 4;
 const currentSeason = ['spring', 'summer', 'autumn', 'winter'][randomInt(4)];
-const pathWidth = 40;
+const pathWidth = 60;
 const tileSize = 200;
 let selectedNodes = [];
 let elementMap = [];
@@ -267,8 +267,13 @@ function drawObjectInOrder(objectKeys, objectList, ctx) {
 }
 
 function drawTiles() {
+	let backgroundSet = false;
   elementMap.forEach(item => {
     if (item.type == 'tile') {
+			if (!backgroundSet &&item.tileData.color) {
+				backgroundSet = true;
+				document.querySelector('.town').style.background = item.tileData.color
+			}
 	    let id = `n${item.x}_${item.y}`;
       let canvas = document.querySelector(`#${id}`);
       if (!canvas) {
@@ -276,14 +281,25 @@ function drawTiles() {
         return
       }
       var ctx = canvas.getContext('2d');
+
+			if (item.tileData.streets) {
+				ctx.fillStyle = '#546e7a';
+				ctx.fillRect(0, 0, tileSize + 2 * pathWidth, tileSize + 2 * pathWidth);
+				Object.keys(item.tileData.streets).forEach(k => {
+					let p = item.tileData.streets[k];
+					ctx.fillStyle = p.data.color;
+					ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+				})
+			}
+
       ctx.fillStyle = item.tileData.color;
       ctx.fillRect(pathWidth, pathWidth, tileSize, tileSize);
-      Object.keys(item.tileData.pathMap).forEach(k => {
+      item.tileData.pathMap && Object.keys(item.tileData.pathMap).forEach(k => {
         let p = item.tileData.pathMap[k];
         ctx.fillStyle = p.data.color;
         ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
       })
-
+			
 			item.tileData.artifactMap && Object.keys(item.tileData.artifactMap).forEach(k => {
         let p = item.tileData.artifactMap[k];
         ctx.fillStyle = p.data.color;
@@ -313,6 +329,7 @@ function drawTiles() {
 }
 
 function createRiverPath(elementMap, availableTileCounts) {
+	let riverCount = 1
 	let side = ['x', 'y'][randomInt(2)]
 	let coordinates = {
 		x:  side == 'x' ? randomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][randomInt(2)],
@@ -330,11 +347,14 @@ function createRiverPath(elementMap, availableTileCounts) {
 	else if (edgePoint.x == (availableTileCounts.x - 1) * 4 + 1) direction = 'r'
 	else if (edgePoint.y == 1) direction = 'u'
 	else direction = 'd'
-
+	if (elementData.tileData) {
+		return
+	}
 	elementData.tileData = riverStart(direction).data
 	console.log(elementData.tileData)
 	let canGenerateNextTile = true;
 	while (canGenerateNextTile) {
+		riverCount++
 		let riverData = elementMap[elementIndex].tileData.objectsMap[0].data
 		let direction = directions[(directions.indexOf(riverData.direction.exit) + 2)%4]
 		if (!riverData.direction.exit) break;
@@ -363,7 +383,7 @@ function createRiverPath(elementMap, availableTileCounts) {
 			elementMap[elementIndex].tileData = riverStart(direction).data
 		}
 	}
-
+	return riverCount
 }
 
 
@@ -413,20 +433,22 @@ function start() {
 	elementMap.forEach((e, i) => {
 		town.append(createMapElement(e, i));
 	})
-	createRiverPath(elementMap, availableTileCounts)
+	let riverLength = createRiverPath(elementMap, availableTileCounts)
+	if (riverLength < (availableTileCounts.x * availableTileCounts.y) * 0.2) createRiverPath(elementMap, availableTileCounts)
 	createTrainStationTile(elementMap, availableTileCounts)
 	let townArea = {
 		x: randomInt(availableTileCounts.x),
 		y: randomInt(availableTileCounts.y)
 	}
 	console.log(`townArea: ${townArea.x},${townArea.y}`)
-	let radius = Math.max(2, randomInt(Math.max(townArea.x, availableTileCounts.x - townArea.x, townArea.y, availableTileCounts.y - townArea.y)))
+	let radius = Math.max(Math.max(2, availableTileCounts.x * 0.2, availableTileCounts.y * 0.2 ), randomInt(Math.max(townArea.x, availableTileCounts.x - townArea.x, townArea.y, availableTileCounts.y - townArea.y)))
 	console.log(`radius: ${radius}`)
 
 	elementMap.forEach((e, i) => {
 		if (e.type != 'tile' || e.tileData) return
 		let distance = Math.pow((Math.pow(townArea.x - ((e.x - 1)/4), 2) + Math.pow(townArea.y - ((e.y - 1)/4), 2)),0.5)
-		e.tileData = randomTile(distance/radius * 100).data
+		if (distance <= radius) e.tileData = randomTile(distance/radius * 100).data
+		else e.tileData = randomTile(95).data
 	})
 
   drawTiles();

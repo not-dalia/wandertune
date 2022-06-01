@@ -188,13 +188,13 @@ class ArtifactDefinitionsRegistry {
 }
 
 class PathBuilder {
-  constructor(tileSize, pathWidth, tileColor, pathColor = 'rgba(0,0,0,0.3)') {
+  constructor(tileSize, pathWidth, tileColor, pathColor = 'rgba(0,0,0,0.2)') {
     this.tileSize = tileSize;
     this.pathWidth = pathWidth;
     this.minW = 2;
     this.maxW = 5;
-    // this.color = 'rgba(0,0,0,0)';
-    this.color = '#546e7a';
+    this.color = 'rgba(0,0,0,0.1)';
+    // this.color = '#546e7a';
     //edc487
     this.stroke = pathColor;
     this.tileColor = tileColor;
@@ -203,11 +203,12 @@ class PathBuilder {
     }
   }
 
-  makePathEdge = (rowWidth) => {
+  makePathEdge = (rowWidth, tileSize) => {
+    tileSize = tileSize ?? this.tileSize
     let lastPathValue = 0;
-    let pathRowArr = new Array(this.tileSize).fill({}).map((_, i) => {
+    let pathRowArr = new Array(tileSize).fill({}).map((_, i) => {
       if (i == 0) {
-      } else if (i >= this.tileSize - 4) {
+      } else if (i >= tileSize - 4) {
         lastPathValue = Math.max(0, Math.min(lastPathValue - 1, 3))
       } else {
         let newPathChance = randomInt(100);
@@ -220,9 +221,81 @@ class PathBuilder {
     return pathRowArr;
   }
 
-  makePath = (rowWidth = 2) => {
+  makeFrame = (rowWidth) => {
     let pointsMap = {};
-    let lastPathValue = 1;
+  
+    let bottomEdgePath = this.makePathEdge(rowWidth, this.tileSize + 2 * this.pathWidth)
+    bottomEdgePath.forEach((pathRow, ex) => {
+      pathRow.forEach((p, i) => {
+        if (!p) return;
+        let pathPoint = {
+          type: 'path',
+          x: ex,
+          y: this.tileSize + this.pathWidth * 2 + (rowWidth - i) - rowWidth,
+          data: {
+            ...p
+          }
+        }
+        if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+        pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+      })
+    })
+
+    let topEdgePath = this.makePathEdge(rowWidth, this.tileSize + 2 * this.pathWidth)
+    topEdgePath.forEach((pathRow, ex) => {
+      pathRow.forEach((p, i) => {
+        if (!p) return;
+        let pathPoint = {
+          type: 'path',
+          x: (this.tileSize - 1 - ex),
+          y: i ,
+          data: {
+            ...p
+          }
+        }
+        if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+        pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+      })
+    })
+
+    let leftEdgePath = this.makePathEdge(rowWidth, this.tileSize + 2 * this.pathWidth)
+    leftEdgePath.forEach((pathRow, ex) => {
+      pathRow.forEach((p, i) => {
+        if (!p) return;
+        let pathPoint = {
+          type: 'path',
+          y: ex,
+          x: i ,
+          data: {
+            ...p
+          }
+        }
+        if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+        pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+      })
+    })
+
+    let rightEdgePath = this.makePathEdge(rowWidth, this.tileSize + 2 * this.pathWidth)
+    rightEdgePath.forEach((pathRow, ex) => {
+      pathRow.forEach((p, i) => {
+        if (!p) return;
+        let pathPoint = {
+          type: 'path',
+          y: ex,
+          x: this.tileSize + this.pathWidth * 2 + (rowWidth - i) - rowWidth,
+          data: {
+            ...p
+          }
+        }
+        if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+        pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+      })
+    })
+    return pointsMap;
+  }
+
+  makePath = (withFrame, rowWidth = 2) => {
+    let pointsMap = {};
   
     let bottomEdgePath = this.makePathEdge(rowWidth)
     bottomEdgePath.forEach((pathRow, ex) => {
@@ -291,7 +364,7 @@ class PathBuilder {
         pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
       })
     })
-  
+    if (withFrame) pointsMap = {...pointsMap, ...this.makeFrame(rowWidth)}
     return pointsMap;
   }
 
@@ -305,7 +378,7 @@ class PathBuilder {
       } else if (i == position - 1) {
         return {
           type: 'fill',
-          color: 'rgba(0,0,0,0.1)'
+          color: 'rgba(0,0,0,0.0.05)'
         }
       } else if (i > position) {
         return {
@@ -412,7 +485,8 @@ class Tile {
       objectsMap: this.objectsMap,
       shadowMap: this.shadowMap,
       artifactMap: this.artifactMap,
-      bridges: this.bridges
+      bridges: this.bridges,
+      streets: this.streetMap
     }
   }
 
@@ -436,13 +510,14 @@ class Tile {
         artifactMap[`${a.x}_${a.y}`] = a
       })
     }
-    this.createStreets(artifactMap);
     return artifactMap;
   }
 
-  createStreets = (artifactMap) => {
+  createStreets = () => {
+    let streetMap = {};
     let step = 8;
-    for (let x = this.pathWidth; x < this.tileSize + this.pathWidth; x+=step) {
+    for (let x = this.pathWidth + step - 1; x < this.tileSize + this.pathWidth - step; x+=step) {
+
       let tx = x;
       let ty = this.pathWidth / 2 - 1;
       Array(Math.floor(step/2)).fill({}).forEach((_, i) => {
@@ -451,14 +526,24 @@ class Tile {
           x: tx + i,
           y: ty + 0.5,
           data: {
-            color: 'rgba(255, 255, 255, 0.6)'
+            color: '#bbc5ca'
           }
         }
-        artifactMap[`${a.x}_${a.y}`] = a
+        streetMap[`${a.x}_${a.y}`] = a
+
+        let b = {
+          type: 'artifact',
+          x: tx + i,
+          y: ty + this.tileSize + this.pathWidth + 0.5,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        streetMap[`${b.x}_${b.y}`] = b
       })
     }
 
-    for (let y = this.pathWidth; y < this.tileSize + this.pathWidth; y+=step) {
+    for (let y = this.pathWidth + step - 1; y < this.tileSize + this.pathWidth - step; y+=step) {
       let ty = y;
       let tx = this.pathWidth / 2 - 1;
       Array(Math.floor(step/2)).fill({}).forEach((_, i) => {
@@ -467,10 +552,118 @@ class Tile {
           y: ty + i,
           x: tx + 0.5,
           data: {
-            color: 'rgba(255, 255, 255, 0.6)'
+            color: '#bbc5ca'
+          }
+        }
+        streetMap[`${a.x}_${a.y}`] = a
+
+        let b = {
+          type: 'artifact',
+          y: ty + i,
+          x: tx + this.tileSize + this.pathWidth + 0.5,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        streetMap[`${b.x}_${b.y}`] = b
+      })
+    }
+
+    this.createCrossings(streetMap);
+    return streetMap;
+  }
+
+  createCrossings = (artifactMap) => {
+    let step = 8;
+    for (let x = 1; x < this.pathWidth; x+=2) {
+      let tx = x;
+      let ty = this.pathWidth;
+      Array(Math.floor(step/2)).fill({}).forEach((_, i) => {
+        let a = {
+          type: 'artifact',
+          x: tx,
+          y: ty + i,
+          data: {
+            color: '#bbc5ca'
           }
         }
         artifactMap[`${a.x}_${a.y}`] = a
+
+        let b = {
+          type: 'artifact',
+          x: tx,
+          y: ty + this.tileSize - step / 2 + i,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        artifactMap[`${b.x}_${b.y}`] = b
+
+        let c = {
+          type: 'artifact',
+          x: tx + this.tileSize + this.pathWidth,
+          y: ty + i,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        artifactMap[`${c.x}_${c.y}`] = c
+
+        let d = {
+          type: 'artifact',
+          x: tx + this.tileSize + this.pathWidth,
+          y: ty + this.tileSize - step / 2 + i,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        artifactMap[`${d.x}_${d.y}`] = d
+      })
+    }
+
+    for (let y = 1; y < this.pathWidth; y+=2) {
+      let ty = y;
+      let tx = this.pathWidth;
+      Array(Math.floor(step/2)).fill({}).forEach((_, i) => {
+        let a = {
+          type: 'artifact',
+          x: tx + i,
+          y: ty,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        artifactMap[`${a.x}_${a.y}`] = a
+
+        let b = {
+          type: 'artifact',
+          x: tx + this.tileSize - step / 2 + i,
+          y: ty,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        artifactMap[`${b.x}_${b.y}`] = b
+
+        let c = {
+          type: 'artifact',
+          x: tx + i,
+          y: ty + this.tileSize + this.pathWidth,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        artifactMap[`${c.x}_${c.y}`] = c
+
+        let d = {
+          type: 'artifact',
+          x: tx + this.tileSize - step / 2 + i,
+          y: ty + this.tileSize + this.pathWidth,
+          data: {
+            color: '#bbc5ca'
+          }
+        }
+        artifactMap[`${d.x}_${d.y}`] = d
       })
     }
     return artifactMap;
@@ -716,10 +909,11 @@ class BuildingsTile extends Tile {
   }
 
   createTile = () => {
-    this.pathMap = this.pathBuilder.makePath(2);
+    this.pathMap = this.pathBuilder.makePath(true);
     this.objectsMap = this.createBuildings(this.tileSize - 4, 1, 1);
     this.shadowMap = this.createShadows()
     this.artifactMap = this.createArtifacts(20, 10);
+    this.streetMap = this.createStreets();
   }
 
   createBuildings = (areaSize, offsetX = 0, offsetY = 0) => {
@@ -871,7 +1065,7 @@ class RiverTile extends Tile {
     if (direction.enter == 'l' || direction.exit == 'l') {
       bridges.push({
         type: 'bridge',
-        y: (tileSize - 10) / 2 + this.pathWidth/2,
+        y: (tileSize - 10) / 2 + this.pathWidth/2 + 2.5,
         x: 0,
         data: {
           rotation: 0,
@@ -884,7 +1078,7 @@ class RiverTile extends Tile {
     if (direction.enter == 'u' || direction.exit == 'u') {
       bridges.push({
         type: 'bridge',
-        x: (tileSize - 10) / 2 + this.pathWidth/2,
+        x: (tileSize - 10) / 2 + this.pathWidth/2 + 2.5,
         y: 0,
         data: {
           rotation: 0,
@@ -985,11 +1179,13 @@ class StationTile extends Tile {
       this.direction = directions[randomInt(directions.length)];
     }
 
-    this.pathMap = this.pathBuilder.makePath();
+    this.pathMap = this.pathBuilder.makePath(true);
     this.artifactMap = this.createArtifacts(30, 30);
     let trainPoint = this.createTrainStation();
     this.objectsMap = trainPoint;
     this.shadowMap = this.createShadows(trainPoint[0]);
+    this.streetMap = this.createStreets();
+    
   }
 
   createShadows = (s) => {

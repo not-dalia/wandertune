@@ -6,7 +6,7 @@ body {
 }
 .town {
   position: relative;
-  background: #546e7a;
+  /* background: #546e7a; */
   /* background: #e7ca6e; */
 }
 .town > * {
@@ -20,7 +20,7 @@ body {
 }
 
 .tile:hover {
-  transform: scale(1.05);
+  /* transform: scale(1.05); */
 }
 
 .path {
