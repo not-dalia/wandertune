@@ -36,7 +36,7 @@ class Tree extends TileObject {
     this.type = 'tree';
     this.subtype = type;
     this.width = 20;
-    this.height = 0;
+    this.height = 20;
     this.src = `tiles/forest/${type}.${ext}`;
     this.calculateBoundary();
   }
@@ -67,6 +67,17 @@ class Tree extends TileObject {
         h: 8
       };
     }
+  }
+}
+
+class Building extends TileObject {
+  constructor(type, ext = 'png') {
+    super();
+    this.type = 'building';
+    this.subtype = type;
+    this.width = 24;
+    this.height = 30;
+    this.src = `tiles/building/${type}.${ext}`;
   }
 }
 
@@ -177,21 +188,22 @@ class ArtifactDefinitionsRegistry {
 }
 
 class PathBuilder {
-  constructor(tileSize, pathWidth, tileColor) {
+  constructor(tileSize, pathWidth, tileColor, pathColor = 'rgba(0,0,0,0.3)') {
     this.tileSize = tileSize;
     this.pathWidth = pathWidth;
     this.minW = 2;
     this.maxW = 5;
     // this.color = 'rgba(0,0,0,0)';
-    this.color = '#d1a263';
-    this.stroke = '#edc487';
+    this.color = '#546e7a';
+    //edc487
+    this.stroke = pathColor;
     this.tileColor = tileColor;
     this.boundary = {
       w: 6
     }
   }
 
-  makePathEdge = () => {
+  makePathEdge = (rowWidth) => {
     let lastPathValue = 0;
     let pathRowArr = new Array(this.tileSize).fill({}).map((_, i) => {
       if (i == 0) {
@@ -203,23 +215,23 @@ class PathBuilder {
           lastPathValue = Math.max(1, Math.min(lastPathValue + [1, -1][randomInt(2)], 3))
         }
       }
-      return this.getPathRow(lastPathValue);
+      return this.getPathRow(lastPathValue, rowWidth);
     })
     return pathRowArr;
   }
 
-  makePath = () => {
+  makePath = (rowWidth = 2) => {
     let pointsMap = {};
     let lastPathValue = 1;
   
-    let bottomEdgePath = this.makePathEdge()
+    let bottomEdgePath = this.makePathEdge(rowWidth)
     bottomEdgePath.forEach((pathRow, ex) => {
       pathRow.forEach((p, i) => {
         if (!p) return;
         let pathPoint = {
           type: 'path',
           x: ex + this.pathWidth,
-          y: this.tileSize - Math.round(pathRow.length / 2) + i + this.pathWidth,
+          y: this.tileSize - Math.round(pathRow.length / 2) + i + this.pathWidth - 1,
           data: {
             ...p
           }
@@ -229,7 +241,7 @@ class PathBuilder {
       })
     })
 
-    let topEdgePath = this.makePathEdge()
+    let topEdgePath = this.makePathEdge(rowWidth)
     topEdgePath.forEach((pathRow, ex) => {
       pathRow.forEach((p, i) => {
         if (!p) return;
@@ -246,7 +258,7 @@ class PathBuilder {
       })
     })
 
-    let leftEdgePath = this.makePathEdge()
+    let leftEdgePath = this.makePathEdge(rowWidth)
     leftEdgePath.forEach((pathRow, ex) => {
       pathRow.forEach((p, i) => {
         if (!p) return;
@@ -263,14 +275,14 @@ class PathBuilder {
       })
     })
 
-    let rightEdgePath = this.makePathEdge()
+    let rightEdgePath = this.makePathEdge(rowWidth)
     rightEdgePath.forEach((pathRow, ex) => {
       pathRow.forEach((p, i) => {
         if (!p) return;
         let pathPoint = {
           type: 'path',
           y: (this.tileSize - 1 - ex) + this.pathWidth,
-          x: this.tileSize - Math.round(pathRow.length / 2) + i + this.pathWidth,
+          x: this.tileSize - Math.round(pathRow.length / 2) + i + this.pathWidth - 1,
           data: {
             ...p
           }
@@ -283,8 +295,7 @@ class PathBuilder {
     return pointsMap;
   }
 
-  getPathRow = (position) => {
-    let rowWidth = 4;
+  getPathRow = (position, rowWidth) => {
     let rowPoints = new Array(rowWidth).fill({ }).map((_, i) => {
       if (i == position) {
         return {
@@ -332,10 +343,15 @@ class Season {
     this._artifactColor = this._artifactColors[name];
     this.trees = [];
     this.artifacts = [];
+    this.buildings = [];
   }
 
   setTrees(trees) {
     this.trees = [...trees];
+  }
+
+  setBuildings(buildings) {
+    this.buildings = [...buildings];
   }
 
   setArtifacts(artifacts = []) {
@@ -391,7 +407,7 @@ class Tile {
   get data() {
     return {
       type: this.type,
-      color: this.season.color,
+      color: this.color,
       pathMap: this.pathMap,
       objectsMap: this.objectsMap,
       shadowMap: this.shadowMap,
@@ -417,6 +433,43 @@ class Tile {
           }
         }
   
+        artifactMap[`${a.x}_${a.y}`] = a
+      })
+    }
+    this.createStreets(artifactMap);
+    return artifactMap;
+  }
+
+  createStreets = (artifactMap) => {
+    let step = 8;
+    for (let x = this.pathWidth; x < this.tileSize + this.pathWidth; x+=step) {
+      let tx = x;
+      let ty = this.pathWidth / 2 - 1;
+      Array(Math.floor(step/2)).fill({}).forEach((_, i) => {
+        let a = {
+          type: 'artifact',
+          x: tx + i,
+          y: ty + 0.5,
+          data: {
+            color: 'rgba(255, 255, 255, 0.6)'
+          }
+        }
+        artifactMap[`${a.x}_${a.y}`] = a
+      })
+    }
+
+    for (let y = this.pathWidth; y < this.tileSize + this.pathWidth; y+=step) {
+      let ty = y;
+      let tx = this.pathWidth / 2 - 1;
+      Array(Math.floor(step/2)).fill({}).forEach((_, i) => {
+        let a = {
+          type: 'artifact',
+          y: ty + i,
+          x: tx + 0.5,
+          data: {
+            color: 'rgba(255, 255, 255, 0.6)'
+          }
+        }
         artifactMap[`${a.x}_${a.y}`] = a
       })
     }
@@ -490,6 +543,7 @@ class ForestTile extends Tile {
     this.pixelSize = pixelSize;
     this.pathBuilder = new PathBuilder(this.tileSize, this.pathWidth, this.season.color)
     this.type = 'forest';
+    this.color = this.season.color;
 
     this.createTile()
   }
@@ -558,7 +612,7 @@ class ForestTile extends Tile {
       let boundingBox = {
         x: t.x + 2,
         w: t.data.width - 4,
-        y: t.y + t.data.height + 14,
+        y: t.y + t.data.height - 5,
         h: 8
       }
 
@@ -585,6 +639,140 @@ class ForestTile extends Tile {
         }
       }
     })
+    return shadowMap
+  }
+}
+
+class BuildingsTile extends Tile {
+  constructor({
+    season,
+    tileSize,
+    pathWidth,
+    pixelSize,
+    type
+  }) {
+    super();
+    const seasonsData = {
+      buildings: {
+        summer: [new Building('building_1'), new Building('building_2'), new Building('building_3')],
+        spring: [new Building('building_1'), new Building('building_2'), new Building('building_3')],
+        autumn: [new Building('building_1'), new Building('building_2'), new Building('building_3')],
+        winter: [new Building('building_1'), new Building('building_2'), new Building('building_3')]
+      },
+      artifacts: {
+        summer: [
+          // ['dot_b', ['#a3c89b']],
+          ['grass_2', ['#96e057']],
+          ['grass_3', ['#96e057']],
+          ['grass_4', ['#96e057']],
+          ['grass_5', ['#96e057']],
+          ['dot_s', ['#FFD700']],
+          ['dot_s', ['#FFD700']],
+          ['dot_s', ['#FFD700']],
+          ['flower_1', ['#FFD700']],
+          ['dot_s', ['#FFFFFF']],
+          ['dot_s', ['#FFFFFF']],
+          ['dot_s', ['#FFFFFF']],
+          ['dot_s', ['#FFFFFF']],
+        ],
+        spring: [
+          ['grass_4', ['#a3c89b']],
+          ['grass_5', ['#a3c89b']],
+          ['flower_1', ['#ffffff']],
+          ['flower_1', ['#ffffff', '#FFD700']],
+          ['flower_1', ['#DB7093', '#FFD700']],
+        ],
+        autumn: [
+          ['grass_2', ['#c6d087']],
+          ['grass_3', ['#c6d087']],
+          ['grass_4', ['#c6d087']],
+          ['grass_5', ['#c6d087']],
+          ['leaf_1', ['#CD853F']],
+          ['dot_s', ['#CD853F']],
+          ['zigzag_1', ['#CD853F']],
+        ],
+        winter: [
+          ['dot_b', ['#bdecff']],
+          ['grass_2', ['#bdecff']],
+          ['grass_3', ['#bdecff']],
+          ['grass_4', ['#bdecff']],
+          ['grass_5', ['#bdecff']],
+        ]
+      }
+    }
+
+    this.season = new Season(season);
+    this.season.setArtifacts(seasonsData.artifacts[season]);
+    this.season.setBuildings(seasonsData.buildings[season]);
+    this.tileSize = tileSize;
+    this.pathWidth = pathWidth;
+    this.pixelSize = pixelSize;
+    this.type = 'buildings';
+    this.color = this.season.color;
+    this.pathColor = '#303e44'
+    this.pathBuilder = new PathBuilder(this.tileSize, this.pathWidth, this.season.color)
+
+    this.createTile()
+  }
+
+  createTile = () => {
+    this.pathMap = this.pathBuilder.makePath(2);
+    this.objectsMap = this.createBuildings(this.tileSize - 4, 1, 1);
+    this.shadowMap = this.createShadows()
+    this.artifactMap = this.createArtifacts(20, 10);
+  }
+
+  createBuildings = (areaSize, offsetX = 0, offsetY = 0) => {
+    let buildingsMap = {};
+    let buildingTypes = [... this.season.buildings]
+    for (let t = 0; t < 2; t++) {
+      let buildingIndex = randomInt(buildingTypes.length);
+      let building = buildingTypes[buildingIndex].data;
+      buildingTypes.splice(buildingIndex, 1);
+      let tx = t * building.width + offsetX + this.pathWidth + 1 - (1*t);
+      let ty =  offsetY + this.pathWidth - 14 + randomInt(18);
+      let buildingPoint = {
+        type: 'building',
+        x: tx,
+        y: ty,
+        data: {
+          ...building
+        }
+      }
+      buildingsMap[`${buildingPoint.x}_${buildingPoint.y}`] = buildingPoint
+    }
+
+    return buildingsMap;
+  }
+
+  createShadows = () => {
+    let buildingsMap = this.objectsMap;
+    let buildingsKeys = Object.keys(buildingsMap);
+    let shadowMap = {};
+    buildingsKeys.forEach(k => {
+      let t = buildingsMap[k];
+      let boundingBox = {
+        x: t.x,
+        w: 23,
+        y: t.y + 28,
+        h: 16
+      }
+
+      for (let sy = boundingBox.y; sy < boundingBox.y + boundingBox.h; sy++) {
+        for (let sx = boundingBox.x; sx < boundingBox.x + boundingBox.w; sx++) {
+          if ((sx == boundingBox.x || sx == boundingBox.x + boundingBox.w - 1) && (sy == boundingBox.y || sy == boundingBox.y + boundingBox.h - 1)) continue;
+          shadowMap[`${sx}_${sy}`] = {
+            type: 'shadow',
+            x: sx,
+            y: sy,
+            data: {
+              parent: k
+            }
+          }
+        }
+      }
+    })
+    console.log(shadowMap)
     return shadowMap
   }
 }
@@ -656,6 +844,7 @@ class RiverTile extends Tile {
     this.type = 'river';
     this.subtype = subtype;
     this.direction = direction;
+    this.color = this.season.color;
 
     this.createTile()
   }
@@ -786,6 +975,7 @@ class StationTile extends Tile {
     this.pathBuilder = new PathBuilder(tileSize, pathWidth, this.season.color)
     this.type = 'station';
     this.direction = direction;
+    this.color = this.season.color;
 
     this.createTile()
   }
@@ -852,7 +1042,7 @@ class StationTile extends Tile {
 }
 
 function randomTile() {
-  return tileFactory.make('forest');
+  return tileFactory.make(['forest', 'buildings'][randomInt(2)]);
 }
 
 function riverStart(direction) {
@@ -899,6 +1089,7 @@ function registerTiles() {
   tileFactory.registerTileType('forest', ForestTile);
   tileFactory.registerTileType('river', RiverTile);
   tileFactory.registerTileType('station', StationTile);
+  tileFactory.registerTileType('buildings', BuildingsTile);
 }
 
 const directions = ['u', 'r', 'd', 'l'];

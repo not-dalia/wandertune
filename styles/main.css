@@ -6,7 +6,7 @@ body {
 }
 .town {
   position: relative;
-  background: #d1a263;
+  background: #546e7a;
   /* background: #e7ca6e; */
 }
 .town > * {
