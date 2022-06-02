@@ -497,6 +497,13 @@ class Tile {
       let artifact = this.season.artifacts[randomInt(this.season.artifacts.length)];
       let tx = randomInt(this.tileSize - 9) + 3 + this.pathWidth;
       let ty = randomInt(this.tileSize - 9) + 3 + this.pathWidth;
+      if (this.type == 'forest') {
+        tx = randomInt(this.tileSize + this.pathWidth * 2 - 9) + 3;
+        ty = randomInt(this.tileSize + this.pathWidth * 2 - 9) + 3;
+      } else if (this.type == 'river') {
+        let tx = randomInt(this.tileSize) + this.pathWidth;
+        let ty = randomInt(this.tileSize) + this.pathWidth;
+      }
       artifact.points.forEach(p => {
         let a = {
           type: 'artifact',
@@ -742,7 +749,7 @@ class ForestTile extends Tile {
   }
 
   createTile = () => {
-    this.pathMap = this.pathBuilder.makePath();
+    // this.pathMap = this.pathBuilder.makePath();
     this.objectsMap = this.createTrees(this.tileSize - 4, 1, 1);
     this.shadowMap = this.createShadows()
     this.artifactMap = this.createArtifacts(35, 30);
@@ -1052,7 +1059,7 @@ class RiverTile extends Tile {
       this.direction = directions[randomInt(directions.length)];
     }
 
-    this.pathMap = this.pathBuilder.makePath();
+    // this.pathMap = this.pathBuilder.makePath();
     this.artifactMap = this.createArtifacts(20, 10);
     this.objectsMap = this.createRiver();
     this.bridges = this.createBridges(this.objectsMap[0].data.direction);
@@ -1080,6 +1087,32 @@ class RiverTile extends Tile {
         type: 'bridge',
         x: (tileSize - 10) / 2 + this.pathWidth/2 + 2.5,
         y: 0,
+        data: {
+          rotation: 0,
+          src: `tiles/river/bridge_h.png`,
+          height: 20,
+          width: 8,
+        }
+      })
+    }
+    if (direction.enter == 'r' || direction.exit == 'r') {
+      bridges.push({
+        type: 'bridge',
+        y: (tileSize - 10) / 2 + this.pathWidth/2 + 2.5,
+        x: this.tileSize + this.pathWidth,
+        data: {
+          rotation: 0,
+          src: `tiles/river/bridge.png`,
+          width: 8,
+          height: 20,
+        }
+      })
+    }
+    if (direction.enter == 'd' || direction.exit == 'd') {
+      bridges.push({
+        type: 'bridge',
+        x: (tileSize - 10) / 2 + this.pathWidth/2 + 2.5,
+        y: this.tileSize + this.pathWidth,
         data: {
           rotation: 0,
           src: `tiles/river/bridge_h.png`,

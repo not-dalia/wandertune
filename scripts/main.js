@@ -283,6 +283,7 @@ function drawTiles() {
       var ctx = canvas.getContext('2d');
 
 			if (item.tileData.streets) {
+				document.querySelector(`#n${item.x}_${item.y}`).style.zIndex = 15
 				ctx.fillStyle = '#546e7a';
 				ctx.fillRect(0, 0, tileSize + 2 * pathWidth, tileSize + 2 * pathWidth);
 				Object.keys(item.tileData.streets).forEach(k => {

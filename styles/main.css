@@ -21,6 +21,8 @@ body {
 
 .tile:hover {
   /* transform: scale(1.05); */
+  /* outline: 2px solid salmon; */
+  /* outline-offset: -60px; */
 }
 
 .path {
