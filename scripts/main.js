@@ -1,7 +1,3 @@
-const pixelSize = 4;
-const currentSeason = ['spring', 'summer', 'autumn', 'winter'][randomInt(4)];
-const pathWidth = 60;
-const tileSize = 200;
 let selectedNodes = [];
 let elementMap = [];
 let loadedImages = {}
@@ -24,25 +20,35 @@ function calculateAvailableTiles(availableSpace) {
 
 function generateTileQuarter(nodeX, nodeY, transparent = []) {
 	let quarterMap = [];
+	let quarterArea = (tileSize + pathWidth) / 4;
 	quarterMap.push({
-		x: nodeX, y: nodeY,
-		locX: nodeX * (tileSize  + pathWidth) / 4, locY: nodeY * (tileSize + pathWidth) / 4,
+		x: nodeX,
+		y: nodeY,
+		locX: nodeX * quarterArea,
+		locY: nodeY * quarterArea,
 		type: 'node',
-		w: pathWidth, h: pathWidth,
+		w: pathWidth,
+		h: pathWidth,
 	})
 	quarterMap.push({
-		x: nodeX + 1, y: nodeY,
-		locX: nodeX * (tileSize + pathWidth) / 4 + pathWidth, locY: nodeY * (tileSize + pathWidth) / 4,
+		x: nodeX + 1,
+		y: nodeY,
+		locX: nodeX * quarterArea + pathWidth,
+		locY: nodeY * quarterArea,
 		type: 'path',
 		orientation: 'h',
-		w: (tileSize - pathWidth) / 2, h: pathWidth,
+		w: (tileSize - pathWidth) / 2,
+		h: pathWidth,
 	})
 	quarterMap.push({
-		x: nodeX, y: nodeY + 1,
-		locX: nodeX * (tileSize + pathWidth) / 4, locY: nodeY * (tileSize + pathWidth) / 4 + pathWidth,
+		x: nodeX,
+		y: nodeY + 1,
+		locX: nodeX * quarterArea,
+		locY: nodeY * quarterArea + pathWidth,
 		type: 'path',
 		orientation: 'v',
-		w: pathWidth, h: (tileSize - pathWidth) / 2,
+		w: pathWidth,
+		h: (tileSize - pathWidth) / 2,
 	})
 	transparent.forEach(n => {
 		quarterMap[n].transparent = true;
@@ -56,77 +62,104 @@ function generateTileMap(availableTileCounts) {
 		for (let tx = 0; tx < availableTileCounts.x + 1; tx++) {
 			if (tx == availableTileCounts.x) {
 				elementMap.push({
-					x: tx * 4, y: ty * 4,
-					locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth),
+					x: tx * 4,
+					y: ty * 4,
+					locX: tx * (tileSize + pathWidth),
+					locY: ty * (tileSize + pathWidth),
 					type: 'node',
-					w: pathWidth, h: pathWidth,
+					w: pathWidth,
+					h: pathWidth,
 				})
 				if (ty != availableTileCounts.y) {
 					elementMap.push({
-						x: tx * 4, y: ty * 4 + 1,
-						locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth) + pathWidth,
+						x: tx * 4,
+						y: ty * 4 + 1,
+						locX: tx * (tileSize + pathWidth),
+						locY: ty * (tileSize + pathWidth) + pathWidth,
 						type: 'path',
 						orientation: 'v',
-						w: pathWidth, h: (tileSize - pathWidth)/2,
+						w: pathWidth,
+						h: (tileSize - pathWidth) / 2,
 					})
-					
+
 					elementMap.push({
-						x: tx * 4, y: ty * 4 + 2,
-						locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth) + pathWidth/2 + tileSize/2,
+						x: tx * 4,
+						y: ty * 4 + 2,
+						locX: tx * (tileSize + pathWidth),
+						locY: ty * (tileSize + pathWidth) + pathWidth / 2 + tileSize / 2,
 						type: 'node',
-						w: pathWidth, h: pathWidth,
+						w: pathWidth,
+						h: pathWidth,
 					})
-					
+
 					elementMap.push({
-						x: tx * 4, y: ty * 4 + 3,
-						locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth) + 1.5 * pathWidth + tileSize/2,
+						x: tx * 4,
+						y: ty * 4 + 3,
+						locX: tx * (tileSize + pathWidth),
+						locY: ty * (tileSize + pathWidth) + 1.5 * pathWidth + tileSize / 2,
 						type: 'path',
 						orientation: 'v',
-						w: pathWidth, h: (tileSize - pathWidth)/2,
+						w: pathWidth,
+						h: (tileSize - pathWidth) / 2,
 					})
 				}
 			}
 			if (ty == availableTileCounts.y) {
 				elementMap.push({
-					x: tx * 4, y: ty * 4,
-					locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth),
+					x: tx * 4,
+					y: ty * 4,
+					locX: tx * (tileSize + pathWidth),
+					locY: ty * (tileSize + pathWidth),
 					type: 'node',
-					w: pathWidth, h: pathWidth,
+					w: pathWidth,
+					h: pathWidth,
 				})
 				if (tx != availableTileCounts.x) {
 					elementMap.push({
-						x: tx * 4 + 1, y: ty * 4,
-						locX: tx * (tileSize + pathWidth) + pathWidth, locY: ty * (tileSize + pathWidth),
+						x: tx * 4 + 1,
+						y: ty * 4,
+						locX: tx * (tileSize + pathWidth) + pathWidth,
+						locY: ty * (tileSize + pathWidth),
 						type: 'path',
 						orientation: 'h',
-						w: (tileSize - pathWidth) / 2, h: pathWidth,
+						w: (tileSize - pathWidth) / 2,
+						h: pathWidth,
 					})
 					elementMap.push({
-						x: tx * 4 + 2, y: ty * 4,
-						locX: tx * (tileSize + pathWidth) + pathWidth/2 + tileSize/2, locY: ty * (tileSize + pathWidth),
+						x: tx * 4 + 2,
+						y: ty * 4,
+						locX: tx * (tileSize + pathWidth) + pathWidth / 2 + tileSize / 2,
+						locY: ty * (tileSize + pathWidth),
 						type: 'node',
-						w: pathWidth, h: pathWidth,
+						w: pathWidth,
+						h: pathWidth,
 					})
 					elementMap.push({
-						x: tx * 4 + 3, y: ty * 4,
-						locX: tx * (tileSize + pathWidth) + 1.5* pathWidth + tileSize/2, locY: ty * (tileSize + pathWidth),
+						x: tx * 4 + 3,
+						y: ty * 4,
+						locX: tx * (tileSize + pathWidth) + 1.5 * pathWidth + tileSize / 2,
+						locY: ty * (tileSize + pathWidth),
 						type: 'path',
 						orientation: 'h',
-						w: (tileSize - pathWidth) / 2, h: pathWidth,
+						w: (tileSize - pathWidth) / 2,
+						h: pathWidth,
 					})
 				}
-				
+
 			}
 			if (tx == availableTileCounts.x || ty == availableTileCounts.y) continue;
 			elementMap.push({
-				x: tx * 4 + 1, y: ty * 4 + 1,
-				locX: tx * (tileSize + pathWidth), locY: ty * (tileSize + pathWidth),
+				x: tx * 4 + 1,
+				y: ty * 4 + 1,
+				locX: tx * (tileSize + pathWidth),
+				locY: ty * (tileSize + pathWidth),
 				type: 'tile',
 				orientation: 'v',
-				w: tileSize + 2*pathWidth, h: tileSize + 2*pathWidth,
-        // tileData: randomTile(tileSize)
+				w: tileSize + 2 * pathWidth,
+				h: tileSize + 2 * pathWidth,
+				// tileData: randomTile(tileSize)
 			})
-			
+
 			elementMap = elementMap.concat(generateTileQuarter(tx * 4, ty * 4))
 			elementMap = elementMap.concat(generateTileQuarter(tx * 4 + 2, ty * 4, [2]))
 			elementMap = elementMap.concat(generateTileQuarter(tx * 4, ty * 4 + 2, [1]))
@@ -141,7 +174,7 @@ function disableNodes() {
 	let nodes = document.querySelectorAll('.node');
 	if (selectedNodes.length == 0) {
 		nodes.forEach(node => {
-			node.classList.remove('last');				
+			node.classList.remove('last');
 			node.classList.remove('disabled');
 		})
 	} else {
@@ -154,11 +187,11 @@ function disableNodes() {
 			nx = parseInt(nx);
 			ny = parseInt(ny);
 			if (nx <= lnx + 2 && nx >= lnx - 2 && ny <= lny + 2 && ny >= lny - 2 && Math.abs(lnx - nx) != Math.abs(lny - ny)) {
-				node.classList.remove('disabled');				
+				node.classList.remove('disabled');
 			} else {
 				node.classList.add('disabled');
 			}
-			node.classList.remove('last');				
+			node.classList.remove('last');
 		})
 		let lastNodeElement = document.querySelector(`#${selectedNodes[selectedNodes.length - 1]}`);
 		if (lastNodeElement) lastNodeElement.classList.add('last');
@@ -168,7 +201,7 @@ function disableNodes() {
 function renderPaths() {
 	let paths = document.querySelectorAll('.path.selected');
 	paths.forEach(path => {
-		path.classList.remove('selected');				
+		path.classList.remove('selected');
 	})
 	selectedNodes.forEach((node, i) => {
 		if (i == 0) return;
@@ -187,16 +220,13 @@ function renderPaths() {
 }
 
 function createMapElement(item, i) {
-	let element = item.type == 'tile' ? document.createElement('canvas') : document.createElement('div');
+	if (item.type == 'tile') return;
+	let element = document.createElement('div');
 	element.id = `n${item.x}_${item.y}`;
 	element.style.top = `${item.locY}px`;
 	element.style.left = `${item.locX}px`;
 	element.style.width = `${item.w}px`;
 	element.style.height = `${item.h}px`;
-  if (item.type == 'tile') {
-    element.setAttribute('width', item.w)
-    element.setAttribute('height', item.h)  
-  }
 	element.setAttribute('data-type', item.type)
 	element.setAttribute('data-element-index', i)
 	element.setAttribute('data-orientation', item.orientation)
@@ -204,7 +234,7 @@ function createMapElement(item, i) {
 	if (item.transparent) element.classList.add('transparent')
 	if (item.orientation) element.classList.add(item.type + '_' + item.orientation)
 	if (item.type == 'node') {
-		element.onclick = function(event) {
+		element.onclick = function (event) {
 			let clickedItem = event.target;
 			console.log(clickedItem)
 			let lastNode = selectedNodes.length && selectedNodes[selectedNodes.length - 1];
@@ -221,7 +251,7 @@ function createMapElement(item, i) {
 			renderPaths();
 		}
 	}
-	
+
 	return element;
 }
 
@@ -229,8 +259,8 @@ function drawImageFromSrc(ctx, img, o) {
 	if (o.data.rotation) {
 		let translateDistanceX = o.data.width * pixelSize / 2
 		let translateDistanceY = o.data.height * pixelSize / 2
-		let rotationAngle = o.data.rotation * Math.PI/2
-		ctx.translate(translateDistanceX + o.x * pixelSize , translateDistanceY + o.y * pixelSize);
+		let rotationAngle = o.data.rotation * Math.PI / 2
+		ctx.translate(translateDistanceX + o.x * pixelSize, translateDistanceY + o.y * pixelSize);
 		ctx.rotate(rotationAngle);
 		ctx.drawImage(img, -translateDistanceX, -translateDistanceY);
 		ctx.resetTransform()
@@ -239,51 +269,55 @@ function drawImageFromSrc(ctx, img, o) {
 	}
 }
 
-function drawObjectInOrder(objectKeys, objectList, ctx) {
+async function drawObjectInOrder(objectKeys, objectList, ctx) {
 	if (objectKeys.length <= 0) return;
-	let o = objectList[objectKeys[0]];
-	if (!o.data.src) {
-		let newKeys = [...objectKeys]
-		newKeys.splice(0, 1)
-		drawObjectInOrder(newKeys, objectList, ctx)
-		return
-	}
-	if (!loadedImages[o.data.src]) {
-		let img = new Image();
-		img.onload = function() {
-			loadedImages[o.data.src] = img
-			drawImageFromSrc(ctx, img, o)
-			let newKeys = [...objectKeys]
-			newKeys.splice(0, 1)
-			drawObjectInOrder(newKeys, objectList, ctx)
-		};
-		img.src = o.data.src;
-	} else {
+	ctx.resetTransform();
+	objectKeys.forEach(k => {
+		let o = objectList[k];
+		if (!o.data.src) return;
+		if (!loadedImages[o.data.src]) {
+			console.log(`image not loaded: ${o.data.src}`)
+			return
+		}
 		drawImageFromSrc(ctx, loadedImages[o.data.src], o)
-		let newKeys = [...objectKeys]
-		newKeys.splice(0, 1)
-		drawObjectInOrder(newKeys, objectList, ctx)
-	}
+	}) 
 }
 
-function drawTiles() {
+function loadImageAsync(url) {
+	return new Promise((resolve, reject) => {
+		try {
+			let img = new Image();
+			img.onload = function () {
+				resolve(img)
+			};
+			img.src = url;
+		} catch (err) {
+			reject(err)
+		}
+	})
+}
+
+async function drawTiles(objectsMap, shadowMap, artifactMap) {
 	let backgroundSet = false;
-  elementMap.forEach(item => {
-    if (item.type == 'tile') {
-			if (!backgroundSet &&item.tileData.color) {
+	let canvas = document.querySelector(`#town-canvas`);
+	let ctx = canvas.getContext('2d');
+
+	for (let i = 0; i < elementMap.length; i++) {
+		let item = elementMap[i];
+		if (item.type == 'tile' && item.tileData) {
+			ctx.resetTransform();
+			ctx.translate(item.locX, item.locY)
+			if (!backgroundSet && item.tileData.color) {
 				backgroundSet = true;
 				document.querySelector('.town').style.background = item.tileData.color
 			}
-	    let id = `n${item.x}_${item.y}`;
-      let canvas = document.querySelector(`#${id}`);
-      if (!canvas) {
-        console.warn('failed to find canvas ' + id);
-        return
-      }
-      var ctx = canvas.getContext('2d');
+			let id = `n${item.x}_${item.y}`;
+			if (!canvas) {
+				console.warn('failed to find canvas ' + id);
+				return
+			}
 
 			if (item.tileData.streets) {
-				document.querySelector(`#n${item.x}_${item.y}`).style.zIndex = 15
 				ctx.fillStyle = '#546e7a';
 				ctx.fillRect(0, 0, tileSize + 2 * pathWidth, tileSize + 2 * pathWidth);
 				Object.keys(item.tileData.streets).forEach(k => {
@@ -293,48 +327,98 @@ function drawTiles() {
 				})
 			}
 
-      ctx.fillStyle = item.tileData.color;
-      ctx.fillRect(pathWidth, pathWidth, tileSize, tileSize);
-      item.tileData.pathMap && Object.keys(item.tileData.pathMap).forEach(k => {
-        let p = item.tileData.pathMap[k];
-        ctx.fillStyle = p.data.color;
-        ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
-      })
-			
-			item.tileData.artifactMap && Object.keys(item.tileData.artifactMap).forEach(k => {
-        let p = item.tileData.artifactMap[k];
-        ctx.fillStyle = p.data.color;
-        ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
-      })
+			ctx.fillStyle = item.tileData.color;
+			ctx.fillRect(pathWidth, pathWidth, tileSize, tileSize);
+			item.tileData.pathMap && Object.keys(item.tileData.pathMap).forEach(k => {
+				let p = item.tileData.pathMap[k];
+				ctx.fillStyle = p.data.color;
+				ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+			})
 
-			ctx.globalAlpha = 0.3
-			item.tileData.shadowMap && Object.keys(item.tileData.shadowMap).forEach(k => {
-        let p = item.tileData.shadowMap[k];
-        ctx.fillStyle = 'black';
-        ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
-      })
-
-			ctx.globalAlpha = 1
-			let objectKeys = Object.keys(item.tileData.objectsMap).sort((a, b) => { return item.tileData.objectsMap[a].y - item.tileData.objectsMap[b].y })
-			let objectsMap = {...item.tileData.objectsMap};
-			if (item.tileData.bridges)	{
+			if (item.tileData.bridges) {
 				item.tileData.bridges.forEach((b, i) => {
-					objectsMap[`b_${i}`] = b
-					objectKeys.push(`b_${i}`)
+					let bridge = {
+						...b,
+						x: b.x + item.locX / pixelSize,
+						y: b.y + item.locY / pixelSize
+					}
+					objectsMap[`b_${bridge.x}_${bridge.y}`] = bridge
 				})
 			}
-			drawObjectInOrder(objectKeys, objectsMap, ctx);
 
-    }
-  })
+			console.log('here')
+			/* item.tileData.artifactMap && Object.keys(item.tileData.artifactMap).forEach(k => {
+				let p = item.tileData.artifactMap[k];
+				ctx.fillStyle = p.data.color;
+				ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+			}) */
+
+			/* ctx.globalAlpha = 0.3
+			item.tileData.shadowMap && Object.keys(item.tileData.shadowMap).forEach(k => {
+				let p = item.tileData.shadowMap[k];
+				ctx.fillStyle = 'black';
+				ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+			}) */
+
+		/* 	ctx.globalAlpha = 1
+			if (item.tileData.objectsMap) {
+				let objectKeys = Object.keys(item.tileData.objectsMap).sort((a, b) => {
+					return item.tileData.objectsMap[a].y - item.tileData.objectsMap[b].y
+				})
+				let objectsMap = {
+					...item.tileData.objectsMap
+				};
+				if (item.tileData.bridges) {
+					item.tileData.bridges.forEach((b, i) => {
+						objectsMap[`b_${i}`] = b
+						objectKeys.push(`b_${i}`)
+					})
+				}
+				drawObjectInOrder(objectKeys, objectsMap, ctx);
+			} */
+
+		}
+	}
+	ctx.resetTransform()
+
+	artifactMap && Object.keys(artifactMap).forEach(k => {
+		let p = artifactMap[k];
+		ctx.fillStyle = p.data.color;
+		ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+	})
+
+	ctx.globalAlpha = 0.3
+	shadowMap && Object.keys(shadowMap).forEach(k => {
+		let p = shadowMap[k];
+		ctx.fillStyle = 'black';
+		ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+	})
+
+	ctx.globalAlpha = 1
+	if (objectsMap) {
+		let objectKeys = Object.keys(objectsMap).sort((a, b) => {
+			return objectsMap[a].y - objectsMap[b].y
+		})
+		for (let k = 0; k < objectKeys.length; k++) {
+			let o = objectsMap[objectKeys[k]];
+			if (!o.data.src) continue
+			if (loadedImages[o.data.src]) continue
+			let img = await loadImageAsync(o.data.src)
+			loadedImages[o.data.src] = img
+		}
+		let tempObjectsMap = {
+			...objectsMap
+		};
+		drawObjectInOrder(objectKeys, tempObjectsMap, ctx);
+	}
 }
 
 function createRiverPath(elementMap, availableTileCounts) {
 	let riverCount = 1
 	let side = ['x', 'y'][randomInt(2)]
 	let coordinates = {
-		x:  side == 'x' ? randomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][randomInt(2)],
-		y: side == 'y' ? randomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][randomInt(2)],
+		x: side == 'x' ? randomInt(availableTileCounts.x - 1) : [0, (availableTileCounts.x - 1)][randomInt(2)],
+		y: side == 'y' ? randomInt(availableTileCounts.y - 1) : [0, (availableTileCounts.y - 1)][randomInt(2)],
 	}
 	let edgePoint = {
 		x: coordinates.x * 4 + 1,
@@ -352,12 +436,11 @@ function createRiverPath(elementMap, availableTileCounts) {
 		return
 	}
 	elementData.tileData = riverStart(direction).data
-	console.log(elementData.tileData)
 	let canGenerateNextTile = true;
 	while (canGenerateNextTile) {
 		riverCount++
 		let riverData = elementMap[elementIndex].tileData.objectsMap[0].data
-		let direction = directions[(directions.indexOf(riverData.direction.exit) + 2)%4]
+		let direction = directions[(directions.indexOf(riverData.direction.exit) + 2) % 4]
 		if (!riverData.direction.exit) break;
 		if (riverData.direction.exit == 'u') {
 			coordinates.y = coordinates.y - 1;
@@ -377,7 +460,7 @@ function createRiverPath(elementMap, availableTileCounts) {
 			y: coordinates.y * 4 + 1,
 		}
 		element = document.querySelector(`#n${newPoint.x}_${newPoint.y}`)
-		if (elementMap[ element.dataset.elementIndex].tileData) {
+		if (elementMap[element.dataset.elementIndex].tileData) {
 			elementMap[elementIndex].tileData = riverLake(riverData.direction.enter, 'lake').data
 		} else {
 			elementIndex = element.dataset.elementIndex;
@@ -396,8 +479,8 @@ function createTrainStationTile(elementMap, availableTileCounts) {
 
 		let side = ['x', 'y'][randomInt(2)]
 		let coordinates = {
-			x: side == 'x' ? randomInt(availableTileCounts.x - 1): [0, (availableTileCounts.x - 1)][randomInt(2)],
-			y: side == 'y' ? randomInt(availableTileCounts.y - 1): [0, (availableTileCounts.y - 1)][randomInt(2)],
+			x: side == 'x' ? randomInt(availableTileCounts.x - 1) : [0, (availableTileCounts.x - 1)][randomInt(2)],
+			y: side == 'y' ? randomInt(availableTileCounts.y - 1) : [0, (availableTileCounts.y - 1)][randomInt(2)],
 		}
 		let edgePoint = {
 			x: coordinates.x * 4 + 1,
@@ -419,6 +502,13 @@ function createTrainStationTile(elementMap, availableTileCounts) {
 	} while (c >= 0)
 }
 
+function getElementIndexByTilePoint(point) {
+	let element = document.querySelector(`#n${point.x * 4 + 1}_${point.y * 4 + 1}`)
+	let elementIndex = element.dataset.elementIndex;
+	return elementIndex
+}
+
+
 function start() {
 	tileFactory.init(currentSeason, tileSize, pathWidth, pixelSize);
 
@@ -431,28 +521,50 @@ function start() {
 	town.innerHTML = ''
 	town.style.width = `${availableTileCounts.x * tileSize + availableTileCounts.x * pathWidth + pathWidth}px`
 	town.style.height = `${availableTileCounts.y * tileSize + availableTileCounts.y * pathWidth + pathWidth}px`
-	elementMap.forEach((e, i) => {
-		town.append(createMapElement(e, i));
-	})
-	let riverLength = createRiverPath(elementMap, availableTileCounts)
-	if (riverLength < (availableTileCounts.x * availableTileCounts.y) * 0.2) createRiverPath(elementMap, availableTileCounts)
-	createTrainStationTile(elementMap, availableTileCounts)
-	let townArea = {
-		x: randomInt(availableTileCounts.x),
-		y: randomInt(availableTileCounts.y)
-	}
-	console.log(`townArea: ${townArea.x},${townArea.y}`)
-	let radius = Math.max(Math.max(2, availableTileCounts.x * 0.2, availableTileCounts.y * 0.2 ), randomInt(Math.max(townArea.x, availableTileCounts.x - townArea.x, townArea.y, availableTileCounts.y - townArea.y)))
-	console.log(`radius: ${radius}`)
+	let canvas = document.createElement('canvas');
+	canvas.id = `town-canvas`;
+	canvas.style.top = 0;
+	canvas.style.left = 0;
+	canvas.style.width = `${town.style.width}px`;
+	canvas.style.height = `${town.style.height}px`;
+	canvas.setAttribute('width', town.style.width)
+	canvas.setAttribute('height', town.style.height)
+	town.append(canvas);
 
 	elementMap.forEach((e, i) => {
-		if (e.type != 'tile' || e.tileData) return
-		let distance = Math.pow((Math.pow(townArea.x - ((e.x - 1)/4), 2) + Math.pow(townArea.y - ((e.y - 1)/4), 2)),0.5)
-		if (distance <= radius) e.tileData = randomTile(distance/radius * 100).data
-		else e.tileData = randomTile(95).data
+		let mapElement = createMapElement(e, i);
+		if (mapElement) town.append(mapElement);
 	})
 
-  drawTiles();
+	const townBuilder = new TownBuilder(tileSize, pathWidth, pixelSize, availableTileCounts);
+	townBuilder.registerElementsFromMap(elementMap);
+	let riverLength = townBuilder.createRiverPath();
+	if (riverLength < (availableTileCounts.x * availableTileCounts.y) * 0.2) townBuilder.createRiverPath();
+
+	townBuilder.createTrainStationTile();
+	townBuilder.createTownCentre();
+	townBuilder.generateStreets();
+	townBuilder.generateAllTilesData(elementMap);
+
+	// let riverLength = createRiverPath(elementMap, availableTileCounts)
+	// if (riverLength < (availableTileCounts.x * availableTileCounts.y) * 0.2) createRiverPath(elementMap, availableTileCounts)
+	// createTrainStationTile(elementMap, availableTileCounts)
+	// let townArea = {
+	// 	x: randomInt(availableTileCounts.x),
+	// 	y: randomInt(availableTileCounts.y)
+	// }
+	// console.log(`townArea: ${townArea.x},${townArea.y}`)
+	// let radius = Math.max(Math.max(2, availableTileCounts.x * 0.2, availableTileCounts.y * 0.2 ), randomInt(Math.max(townArea.x, availableTileCounts.x - townArea.x, townArea.y, availableTileCounts.y - townArea.y)))
+	// console.log(`radius: ${radius}`)
+
+	// elementMap.forEach((e, i) => {
+	// 	if (e.type != 'tile' || e.tileData) return
+	// 	let distance = Math.pow((Math.pow(townArea.x - ((e.x - 1)/4), 2) + Math.pow(townArea.y - ((e.y - 1)/4), 2)),0.5)
+	// 	if (distance <= radius) e.tileData = randomTile(distance/radius * 100).data
+	// 	else e.tileData = randomTile(95).data
+	// })
+
+	drawTiles(townBuilder.objectsMap, townBuilder.shadowMap, townBuilder.artifactMap);
 }
 
 start()
