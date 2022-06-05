@@ -297,10 +297,13 @@ function loadImageAsync(url) {
 	})
 }
 
-async function drawTiles(objectsMap, shadowMap, artifactMap) {
+async function drawTiles(objectsMap, shadowMap, artifactMap, busyAreas) {
 	let backgroundSet = false;
 	let canvas = document.querySelector(`#town-canvas`);
 	let ctx = canvas.getContext('2d');
+	let season = new Season(currentSeason)
+	ctx.fillStyle = season.color;
+	ctx.fillRect(0, 0, canvas.width, canvas.height)
 
 	for (let i = 0; i < elementMap.length; i++) {
 		let item = elementMap[i];
@@ -309,7 +312,8 @@ async function drawTiles(objectsMap, shadowMap, artifactMap) {
 			ctx.translate(item.locX, item.locY)
 			if (!backgroundSet && item.tileData.color) {
 				backgroundSet = true;
-				document.querySelector('.town').style.background = item.tileData.color
+				let season = new Season(currentSeason)
+				document.querySelector('.town').style.background = season.color
 			}
 			let id = `n${item.x}_${item.y}`;
 			if (!canvas) {
@@ -326,9 +330,21 @@ async function drawTiles(objectsMap, shadowMap, artifactMap) {
 					ctx.fillRect(p.x * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
 				})
 			}
+		}
+	}
+
+	
+	for (let i = 0; i < elementMap.length; i++) {
+		let item = elementMap[i];
+		if (item.type == 'tile' && item.tileData) {
+			ctx.resetTransform();
+			ctx.translate(item.locX, item.locY)
 
 			ctx.fillStyle = item.tileData.color;
 			ctx.fillRect(pathWidth, pathWidth, tileSize, tileSize);
+			// if (item.tileData.type == 'buildings') {
+			// 	ctx.clearRect(pathWidth, pathWidth, tileSize, tileSize);
+			// }
 			item.tileData.pathMap && Object.keys(item.tileData.pathMap).forEach(k => {
 				let p = item.tileData.pathMap[k];
 				ctx.fillStyle = p.data.color;
@@ -411,6 +427,25 @@ async function drawTiles(objectsMap, shadowMap, artifactMap) {
 		};
 		drawObjectInOrder(objectKeys, tempObjectsMap, ctx);
 	}
+	/* 
+	ctx.resetTransform()
+	ctx.globalAlpha = 0.3
+	if (busyAreas) {
+		busyAreas.all().forEach(k => {
+			ctx.fillStyle = 'red';
+			ctx.fillRect(k.minX * pixelSize, k.minY * pixelSize, (k.maxX - k.minX) * pixelSize, (k.maxY - k.minY) *pixelSize);
+		})
+	} */
+}
+
+function parseIndexToCoords(index) {
+	let [x, y] = index.split('_');
+	x = parseInt(x);
+	y = parseInt(y);
+	return {
+		x,
+		y
+	};
 }
 
 function createRiverPath(elementMap, availableTileCounts) {
@@ -564,7 +599,8 @@ function start() {
 	// 	else e.tileData = randomTile(95).data
 	// })
 
-	drawTiles(townBuilder.objectsMap, townBuilder.shadowMap, townBuilder.artifactMap);
+	drawTiles(townBuilder.objectsMap, townBuilder.shadowMap, townBuilder.artifactMap, townBuilder.busyAreas);
+	console.log(townBuilder.busyAreas.all())
 }
 
 start()

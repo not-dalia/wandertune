@@ -20,16 +20,100 @@ class PathBuilder {
     let pathRowArr = new Array(tileSize).fill({}).map((_, i) => {
       if (i == 0) {
       } else if (i >= tileSize - 4) {
-        lastPathValue = Math.max(0, Math.min(lastPathValue - 1, 3))
+        lastPathValue = Math.min(0, Math.min(lastPathValue - 1, 3))
       } else {
         let newPathChance = randomInt(100);
-        if (newPathChance < 10) {
+        if (newPathChance < 30) {
           lastPathValue = Math.max(1, Math.min(lastPathValue + [1, -1][randomInt(2)], 3))
         }
       }
       return this.getPathRow(lastPathValue, rowWidth);
     })
     return pathRowArr;
+  }
+
+  makePathFrame = (directions, areaSize) => {
+    let rowWidth = 2;
+    let pointsMap = {};
+
+    if (directions.u) {
+      let topEdgePath = this.makePathEdge(rowWidth, areaSize.w + 2)
+      topEdgePath.forEach((pathRow, ex) => {
+        pathRow.forEach((p, i) => {
+          if (!p) return;
+          let pathPoint = {
+            type: 'path',
+            x: areaSize.x + ex + 1,
+            y: (i) + areaSize.y - 2 * rowWidth,
+            data: {
+              ...p
+            }
+          }
+          if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+          pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+        })
+      })
+    }
+
+    if (directions.d) {
+      let bottomEdgePath = this.makePathEdge(rowWidth, areaSize.w + 2)
+      bottomEdgePath.forEach((pathRow, ex) => {
+        pathRow.forEach((p, i) => {
+          if (!p) return;
+          let pathPoint = {
+            type: 'path',
+            x: areaSize.x + ex + 1,
+            y: (rowWidth - i) + areaSize.h + areaSize.y + rowWidth - 1,
+            data: {
+              ...p
+            }
+          }
+          if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+          pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+        })
+      })
+    }
+
+    if (directions.r) {
+      let rightEdgePath = this.makePathEdge(rowWidth, areaSize.h + 2)
+      rightEdgePath.forEach((pathRow, ex) => {
+        pathRow.forEach((p, i) => {
+          if (!p) return;
+          let pathPoint = {
+            type: 'path',
+            x: (rowWidth - i) + areaSize.w + areaSize.x + rowWidth - 1,
+            y: areaSize.y + ex + 1,
+            data: {
+              ...p
+            }
+          }
+          if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+          pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+        })
+      })
+    }
+
+    if (directions.l) {
+      let leftEdgePath = this.makePathEdge(rowWidth, areaSize.h + 2)
+      leftEdgePath.forEach((pathRow, ex) => {
+        pathRow.forEach((p, i) => {
+          if (!p) return;
+          let pathPoint = {
+            type: 'path',
+            x: (i) + areaSize.x - 2 * rowWidth,
+            y: areaSize.y + ex + 1,
+            data: {
+              ...p
+            }
+          }
+          if (pointsMap[`${pathPoint.x}_${pathPoint.y}`] && pointsMap[`${pathPoint.x}_${pathPoint.y}`].data.type == 'fill') return
+          pointsMap[`${pathPoint.x}_${pathPoint.y}`] = pathPoint
+        })
+      })
+    }
+    
+
+    return pointsMap;
   }
 
   makeFrame = (rowWidth) => {
@@ -105,7 +189,7 @@ class PathBuilder {
     return pointsMap;
   }
 
-  makePath = (withFrame, rowWidth = 3) => {
+  makePath = (withFrame, rowWidth = 2) => {
     let pointsMap = {};
   
     let bottomEdgePath = this.makePathEdge(rowWidth)
@@ -115,7 +199,7 @@ class PathBuilder {
         let pathPoint = {
           type: 'path',
           x: ex + this.pathWidth,
-          y: this.tileSize - Math.round(pathRow.length / 2) + i + this.pathWidth,
+          y: this.tileSize - Math.round(pathRow.length / 2) + (rowWidth - i) - rowWidth + this.pathWidth,
           data: {
             ...p
           }
@@ -132,7 +216,7 @@ class PathBuilder {
         let pathPoint = {
           type: 'path',
           x: (this.tileSize - 1 - ex) + this.pathWidth,
-          y: (3-i) - 1 + this.pathWidth ,
+          y: (i) - 2 + this.pathWidth ,
           data: {
             ...p
           }
@@ -148,8 +232,8 @@ class PathBuilder {
         if (!p) return;
         let pathPoint = {
           type: 'path',
-          y: ex + this.pathWidth,
-          x: (3-i) - 2 + this.pathWidth ,
+          y: ex - 1 + this.pathWidth,
+          x: (i) - 2 + this.pathWidth ,
           data: {
             ...p
           }
@@ -165,8 +249,8 @@ class PathBuilder {
         if (!p) return;
         let pathPoint = {
           type: 'path',
-          y: (this.tileSize - 1 - ex) + this.pathWidth,
-          x: this.tileSize - Math.round(pathRow.length / 2) + i + this.pathWidth ,
+          y: (this.tileSize - ex) + this.pathWidth,
+          x: this.tileSize - Math.round(pathRow.length / 2) + (rowWidth - i) + this.pathWidth ,
           data: {
             ...p
           }
@@ -190,18 +274,23 @@ class PathBuilder {
       } else if (i == position - 1) {
         return {
           type: 'fill',
-          color: this.tileColor
-          // color: 'rgba(0,0,0,0.0.05)'
+          // color: 'pink'
+          // color: this.tileColor
+          color: 'rgba(0,0,0,0.1)'
         }
       } else if (i > position) {
         return {
           type: 'fill',
-          color: this.color
+          // color: this.color
+          color: this.tileColor
+          // color: 'red'
+          
         }
       }
       return {
         type: 'fill',
-        color: 'rgba(0,0,0,0)'
+        color: this.color
+        // color: this.tileColor
       }
     });
     return rowPoints;

@@ -25,8 +25,20 @@ class River extends TileObject {
          */
         if (this.direction.enter == 'l' || this.direction.enter == 'r') {
           this.rotation = randomInt(4, 'odd')
+          this.boundary = [{
+            y: 29,
+            x: 0,
+            h: 23,
+            w: 80,
+          }]
         } else {
           this.rotation = randomInt(4, 'even')
+          this.boundary = [{
+            x: 29,
+            y: 0,
+            w: 23,
+            h: 80,
+          }]
         }
         // For a straight segment, exit direction is always 2 steps from entry.
         this.direction.exit = this.directions[(this.directions.indexOf(this.direction.enter) + 2) % 4]
@@ -47,11 +59,28 @@ class River extends TileObject {
           if (exitDirectionIndex < 0) exitDirectionIndex = 3;
           this.direction.exit = this.directions[exitDirectionIndex]
         }
+        this.boundary = [{
+          x: 31,
+          y: 0,
+          w: 23,
+          h: 80,
+        }, {
+          x: 0,
+          y: 28,
+          w: 80,
+          h: 27,
+        }]
         break;
       case 'lake':
         // Lakes have no exits
         this.src = `tiles/river/river-${this.subtype}-${this.direction.enter}.png`
         this.direction.exit = null
+        this.boundary = [{
+          x: 0,
+          y: 0,
+          w: 80,
+          h: 80,
+        }]
         break;
     }
   }
@@ -69,6 +98,12 @@ class RiverTile extends Tile {
   }) {
     super();
     const seasonsData = {
+      trees: {
+        summer: [new Tree('tree_2'), new Tree('tree_1'), new Tree('tree_3')],
+        spring: [new Tree('tree_1'), new Tree('tree_1'), new Tree('tree_1'), new Tree('tree_4')],
+        autumn: [new Tree('tree_6'), new Tree('tree_7'), new Tree('tree_8'), new Tree('tree_11')],
+        winter: [new Tree('tree_tall_1'), new Tree('tree_tall_2'), new Tree('tree_tall_3')]
+      },
       artifacts: {
         summer: [
           ['grass_2', ['#96e057']],
@@ -117,6 +152,7 @@ class RiverTile extends Tile {
 
     this.season = new Season(season);
     this.season.setArtifacts(seasonsData.artifacts[season]);
+    this.season.setTrees(seasonsData.trees[season]);
     this.tileSize = tileSize;
     this.pathWidth = pathWidth;
     this.pixelSize = pixelSize;
@@ -126,6 +162,7 @@ class RiverTile extends Tile {
     this.direction = direction;
     this.color = this.season.color;
     this.river = (new River(this.subtype, this.direction)).data
+    this.treeBusyAreas = []
 
     const directions = ['u', 'r', 'd', 'l'];
 
@@ -139,12 +176,61 @@ class RiverTile extends Tile {
     // this.createTile()
   }
 
-  createTile = ({objectsMap={}, shadowMap={}, artifactMap={}, busyAreas={}}, areaSize, offset) => {
-
+  createTile = ({objectsMap={}, shadowMap={}, artifactMap={}, busyAreas={}, hasStreets={}}, areaSize, offset) => {
+    this.busyAreas = busyAreas
     // this.pathMap = this.pathBuilder.makePath();
     this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 20, 10);
     let riverPoint = this.createRiver(objectsMap, offset);
     this.bridges = this.createBridges(riverPoint.data.direction);
+    this.pathMap = this.pathBuilder.makePathFrame(hasStreets, areaSize, offset);
+    this.createTrees(objectsMap, areaSize, offset)
+  }
+
+  createTrees = (treeMap, areaSize, offset) => {
+    // let treeCount = 1;
+    let treeCount = randomInt(10) + 15;
+    for (let t = 0; t < treeCount; t++) {
+      let tree = this.season.trees[randomInt(this.season.trees.length)].data;
+
+      // create a random point inside of the area so that tree boundaries are contained within
+      let tx = randomInt(areaSize.w - (tree.boundary.x + tree.boundary.w) + 1) + areaSize.x + offset.x;
+      let ty = randomInt(areaSize.h - (tree.boundary.y + tree.boundary.h) + 1) + areaSize.y + offset.y;
+
+      let treeBoundaryX = [tx + tree.boundary.x, tx + tree.boundary.x + tree.boundary.w];
+      let treeBoundaryY = [ty + tree.boundary.y, ty + tree.boundary.y + tree.boundary.h];
+      let treeBoundaryItem = {
+        minX: treeBoundaryX[0],
+        maxX: treeBoundaryX[1],
+        minY: treeBoundaryY[0],
+        maxY: treeBoundaryY[1],
+        type: 'tree'
+      }
+
+      let canPlant = !this.busyAreas.collides(treeBoundaryItem);
+      if (!canPlant) continue;
+
+      let treePoint = {
+        type: 'tree',
+        x: tx,
+        y: ty,
+        data: {
+          ...tree
+        }
+      }
+      treeMap[`${treePoint.x}_${treePoint.y}`] = treePoint
+      /* for (let tbx = treeBoundaryX[0]; tbx <= treeBoundaryX[1]; tbx++) {
+        for (let tby = treeBoundaryY[0]; tby <= treeBoundaryY[1]; tby++) {
+          this.busyAreas[`${tbx}_${tby}`] = true
+        }
+      } */
+
+      this.busyAreas.insert(treeBoundaryItem)
+      this.treeBusyAreas.push(treeBoundaryItem)
+    }
+    this.treeBusyAreas.forEach(item => {
+      this.busyAreas.remove(item)
+    })
+    return treeMap;
   }
 
   createBridges = (direction) => {
@@ -217,6 +303,16 @@ class RiverTile extends Tile {
       }
     }
     objectsMap[`${riverPoint.x}_${riverPoint.y}`] = riverPoint; 
+    this.river.boundary.forEach(b => {
+      let riverBoundary = {
+        minX: offset.x + b.x,
+        minY: offset.y + b.y,
+        maxX: offset.x + b.x + b.w,
+        maxY: offset.y + b.y + b.h,
+        type: 'river'
+      }
+      this.busyAreas.insert(riverBoundary)
+    })
     return riverPoint;
   }
 }

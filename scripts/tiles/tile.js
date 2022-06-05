@@ -113,9 +113,18 @@ class Tile {
     let artifactCount = randomInt(countRand) + countMin;
     for (let t = 0; t < artifactCount; t++) {
       let artifact = this.season.artifacts[randomInt(this.season.artifacts.length)];
+      if (!artifact) continue;
       let tx = randomInt(areaSize.w) + areaSize.x + offset.x;
       let ty = randomInt(areaSize.h) + areaSize.y + offset.y;
-      artifact && artifact.points.forEach(p => {
+      let artifactBoundary =  {
+        minX: Infinity,
+        minY: Infinity,
+        maxX: -Infinity,
+        maxY: -Infinity
+      }
+
+      let artifactPoints = []
+      artifact.points.forEach(p => {
         let a = {
           type: 'artifact',
           x: tx + p.x,
@@ -124,10 +133,17 @@ class Tile {
             color: artifact.colors[p.color || 0]
           }
         }
-        if (busyAreas[`${a.x}_${a.y}`]) return;
+
+        artifactBoundary.minX = Math.min(artifactBoundary.minX, a.x)
+        artifactBoundary.minY = Math.min(artifactBoundary.minY, a.y)
+        artifactBoundary.maxX = Math.max(artifactBoundary.maxX, a.x)
+        artifactBoundary.maxY = Math.max(artifactBoundary.maxY, a.y)
   
-        artifactMap[`${a.x}_${a.y}`] = a
+        artifactPoints.push(a)
       })
+      if (!busyAreas.collides(artifactBoundary)) artifactPoints.forEach(a => {
+        artifactMap[`${a.x}_${a.y}`] = a
+      });
     }
     return artifactMap;
   }

@@ -28,42 +28,20 @@ class BuildingsTile extends Tile {
       },
       artifacts: {
         summer: [
-          // ['dot_b', ['#a3c89b']],
-          ['grass_2', ['#96e057']],
-          ['grass_3', ['#96e057']],
-          ['grass_4', ['#96e057']],
-          ['grass_5', ['#96e057']],
-          ['dot_s', ['#FFD700']],
-          ['dot_s', ['#FFD700']],
-          ['dot_s', ['#FFD700']],
-          ['flower_1', ['#FFD700']],
-          ['dot_s', ['#FFFFFF']],
-          ['dot_s', ['#FFFFFF']],
-          ['dot_s', ['#FFFFFF']],
-          ['dot_s', ['#FFFFFF']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ],
         spring: [
-          ['grass_4', ['#a3c89b']],
-          ['grass_5', ['#a3c89b']],
-          ['flower_1', ['#ffffff']],
-          ['flower_1', ['#ffffff', '#FFD700']],
-          ['flower_1', ['#DB7093', '#FFD700']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ],
         autumn: [
-          ['grass_2', ['#c6d087']],
-          ['grass_3', ['#c6d087']],
-          ['grass_4', ['#c6d087']],
-          ['grass_5', ['#c6d087']],
-          ['leaf_1', ['#CD853F']],
-          ['dot_s', ['#CD853F']],
-          ['zigzag_1', ['#CD853F']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ],
         winter: [
-          ['dot_b', ['#bdecff']],
-          ['grass_2', ['#bdecff']],
-          ['grass_3', ['#bdecff']],
-          ['grass_4', ['#bdecff']],
-          ['grass_5', ['#bdecff']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ]
       }
     }
@@ -75,7 +53,7 @@ class BuildingsTile extends Tile {
     this.pathWidth = pathWidth;
     this.pixelSize = pixelSize;
     this.type = 'buildings';
-    this.color = this.season.color;
+    this.color = '#dcdcdc';
     this.pathColor = '#303e44'
     this.pathBuilder = new PathBuilder(this.tileSize, this.pathWidth, this.season.color)
     this.objectKeys = []
@@ -83,11 +61,72 @@ class BuildingsTile extends Tile {
   }
 
   createTile = ({objectsMap={}, shadowMap={}, artifactMap={}, busyAreas={}}, areaSize, offset) => {
-    this.pathMap = this.pathBuilder.makePath(true);
+    // this.pathMap = this.pathBuilder.makePath(true);
     this.createBuildings(objectsMap, areaSize, offset);
-    this.createShadows(shadowMap, objectsMap)
-    this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 20, 10);
+    this.createShadows(shadowMap, objectsMap, areaSize, offset)
+    this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 10, 5);
+    this.createBuildingArtifacts(artifactMap, this.pathWidth, this.tileSize, offset)
     this.streetMap = this.createStreets();
+  }
+
+  
+  createBuildingArtifacts = (artifactMap, pathWidth, tileSize, offset) => {
+    this.artifactMap = artifactMap;
+    for (let x = this.pathWidth; x < this.pathWidth + this.tileSize; x++) {
+      let s = {
+        x: offset.x + x,
+        y: offset.y + this.pathWidth,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s.x}_${s.y}`] = s
+
+      let s2 = {
+        y: offset.y + x,
+        x: offset.x + this.pathWidth,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s2.x}_${s2.y}`] = s2
+      
+      let s3 = {
+        y: offset.y + x,
+        x: offset.x + this.pathWidth + this.tileSize - 1,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s3.x}_${s3.y}`] = s3
+
+          
+      let s4 = {
+        x: offset.x + x,
+        y: offset.y + this.pathWidth + this.tileSize - 2,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s4.x}_${s4.y}`] = s4
+    }
+    for (let x = this.pathWidth; x < this.pathWidth + this.tileSize; x++) {
+
+      let s5 = {
+        x: offset.x + x,
+        y: offset.y + this.pathWidth + this.tileSize - 1,
+        type: 'shadow',
+        data: {
+          color: 'lightslategray'
+        }
+      }
+      artifactMap[`${s5.x}_${s5.y}`] = s5
+    }    
+    return artifactMap;
   }
 
   createBuildings = (objectsMap, areaSize, offset) => {

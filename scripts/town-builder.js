@@ -9,7 +9,7 @@ class TownBuilder {
     this._riverTiles = []
     this.objectsMap = {}
     this.shadowMap = {}
-    this.busyAreas = {}
+    this.busyAreas = new rbush()
     this.artifactMap = {}
   }
 
@@ -184,7 +184,6 @@ class TownBuilder {
       if (tile.tile) return
       let tileCoords = this.parseIndexToCoords(k);
       let distance = Math.pow((Math.pow(townArea.x - tileCoords.x , 2) + Math.pow(townArea.y - tileCoords.y, 2)), 0.5)
-      console.log(distance)
       if (distance <= radius) tile.tile = randomTile(distance / radius * 100)
       else tile.tile = randomTile(95)
     })
@@ -195,16 +194,30 @@ class TownBuilder {
       let tile = this._tiles[k]
       if (['forest', 'river'].indexOf(tile.tile.type) >= 0) return;
       let offset = {x: this.elementMap[tile.elementIndex].locX / this.pixelSize, y: this.elementMap[tile.elementIndex].locY / this.pixelSize}
-      for (let x = 0; x < this.tileSize + this.pathWidth * 2; x++) {
-        for (let y = 0; y < this.pathWidth; y++) {
-          let tx = x + offset.x;
-          let ty = y + offset.y;
-          this.busyAreas[`${tx}_${ty}`] = true;
-          this.busyAreas[`${ty}_${tx}`] = true;
-          this.busyAreas[`${tx + this.pathWidth + this.tileSize}_${ty}`] = true;
-          this.busyAreas[`${ty + this.pathWidth + this.tileSize}_${tx}`] = true;
-        }
-      }
+      this.busyAreas.insert({
+        minX: offset.x,
+        maxX: offset.x + this.tileSize + 2 * this.pathWidth,
+        minY: offset.y,
+        maxY: offset.y + this.pathWidth
+      })
+      this.busyAreas.insert({
+        minX: offset.x,
+        maxX: offset.x + this.tileSize + 2 * this.pathWidth,
+        minY: offset.y + this.tileSize + this.pathWidth,
+        maxY: offset.y + this.tileSize + 2 * this.pathWidth
+      })
+      this.busyAreas.insert({
+        minX: offset.x,
+        maxX: offset.x + this.pathWidth,
+        minY: offset.y,
+        maxY: offset.y + this.tileSize + 2 * this.pathWidth
+      })
+      this.busyAreas.insert({
+        minX: offset.x + this.tileSize + this.pathWidth,
+        maxX: offset.x + this.tileSize + 2 * this.pathWidth,
+        minY: offset.y,
+        maxY: offset.y + this.tileSize + 2 * this.pathWidth
+      })
     })
   }
 
@@ -234,7 +247,7 @@ class TownBuilder {
       // console.log(neighbors)
       // console.log(hasStreets)
       // console.log(areaSize)
-      tile.tile.createTile({objectsMap: this.objectsMap, shadowMap: this.shadowMap, artifactMap: this.artifactMap, busyAreas: this.busyAreas}, areaSize, {x: elementMap[tile.elementIndex].locX / this.pixelSize, y: elementMap[tile.elementIndex].locY / this.pixelSize})
+      tile.tile.createTile({objectsMap: this.objectsMap, shadowMap: this.shadowMap, artifactMap: this.artifactMap, busyAreas: this.busyAreas, hasStreets}, areaSize, {x: elementMap[tile.elementIndex].locX / this.pixelSize, y: elementMap[tile.elementIndex].locY / this.pixelSize})
       
 
       elementMap[tile.elementIndex].tileData = tile.tile.data;

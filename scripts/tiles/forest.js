@@ -103,19 +103,20 @@ class ForestTile extends Tile {
     this.tileSize = tileSize;
     this.pathWidth = pathWidth;
     this.pixelSize = pixelSize;
-    // this.pathBuilder = new PathBuilder(this.tileSize, this.pathWidth, this.season.color)
+    this.pathBuilder = new PathBuilder(this.tileSize, this.pathWidth, this.season.color)
     this.type = 'forest';
     this.color = this.season.color;
-    this.busyAreas = {};
+    this.treeBusyAreas = [];
     // this.createTile()
   }
 
-  createTile = ({objectsMap={}, shadowMap={}, artifactMap={}, busyAreas={}}, areaSize, offset) => {
-    // this.pathMap = this.pathBuilder.makePath();
-    this.busyAreas = { ...busyAreas, ...this.busyAreas}
+  createTile = ({objectsMap={}, shadowMap={}, artifactMap={}, busyAreas={}, hasStreets={}}, areaSize, offset) => {
+    this.busyAreas = busyAreas
     this.createTrees(objectsMap, areaSize, offset);
     this.createShadows(shadowMap, objectsMap)
     this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 35, 30);
+    console.log(hasStreets)
+    this.pathMap = this.pathBuilder.makePathFrame(hasStreets, areaSize, offset);
     return {objectsMap, shadowMap, artifactMap}
   }
 
@@ -131,13 +132,15 @@ class ForestTile extends Tile {
 
       let treeBoundaryX = [tx + tree.boundary.x, tx + tree.boundary.x + tree.boundary.w];
       let treeBoundaryY = [ty + tree.boundary.y, ty + tree.boundary.y + tree.boundary.h];
-      
-      let canPlant = true;
-      for (let tbx = treeBoundaryX[0]; tbx <= treeBoundaryX[1]; tbx++) {
-        for (let tby = treeBoundaryY[0]; tby <= treeBoundaryY[1]; tby++) {
-          if (this.busyAreas[`${tbx}_${tby}`]) canPlant = false;
-        }
+      let treeBoundaryItem = {
+        minX: treeBoundaryX[0],
+        maxX: treeBoundaryX[1],
+        minY: treeBoundaryY[0],
+        maxY: treeBoundaryY[1],
+        type: 'tree'
       }
+
+      let canPlant = !this.busyAreas.collides(treeBoundaryItem);
       if (!canPlant) continue;
 
       let treePoint = {
@@ -149,12 +152,18 @@ class ForestTile extends Tile {
         }
       }
       treeMap[`${treePoint.x}_${treePoint.y}`] = treePoint
-      for (let tbx = treeBoundaryX[0]; tbx <= treeBoundaryX[1]; tbx++) {
+      /* for (let tbx = treeBoundaryX[0]; tbx <= treeBoundaryX[1]; tbx++) {
         for (let tby = treeBoundaryY[0]; tby <= treeBoundaryY[1]; tby++) {
           this.busyAreas[`${tbx}_${tby}`] = true
         }
-      }
+      } */
+
+      this.busyAreas.insert(treeBoundaryItem)
+      this.treeBusyAreas.push(treeBoundaryItem)
     }
+    this.treeBusyAreas.forEach(item => {
+      this.busyAreas.remove(item)
+    })
     return treeMap;
   }
 

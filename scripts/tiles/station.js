@@ -25,43 +25,20 @@ class StationTile extends Tile {
     const seasonsData = {
       artifacts: {
         summer: [
-          ['grass_2', ['#96e057']],
-          ['grass_3', ['#96e057']],
-          ['grass_4', ['#96e057']],
-          ['grass_5', ['#96e057']],
-          ['dot_s', ['#FFD700']],
-          ['dot_s', ['#FFD700']],
-          ['dot_s', ['#FFD700']],
-          ['flower_1', ['#FFD700']],
-          ['dot_s', ['#FFFFFF']],
-          ['dot_s', ['#FFFFFF']],
-          ['dot_s', ['#FFFFFF']],
-          ['dot_s', ['#FFFFFF']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ],
         spring: [
-          ['grass_4', ['#a3c89b']],
-          ['grass_5', ['#a3c89b']],
-          ['flower_1', ['#ffffff']],
-          ['flower_1', ['#ffffff', '#FFD700']],
-          ['flower_1', ['#DB7093', '#FFD700']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ],
         autumn: [
-          ['grass_2', ['#c6d087']],
-          ['grass_3', ['#c6d087']],
-          ['grass_4', ['#c6d087']],
-          ['grass_4', ['#CD853F']],
-          ['grass_5', ['#c6d087']],
-          ['grass_5', ['#CD853F']],
-          ['leaf_1', ['#CD853F']],
-          ['dot_s', ['#CD853F']],
-          ['zigzag_1', ['#CD853F']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ],
         winter: [
-          ['dot_b', ['#bdecff']],
-          ['grass_2', ['#bdecff']],
-          ['grass_3', ['#bdecff']],
-          ['grass_4', ['#bdecff']],
-          ['grass_5', ['#bdecff']],
+          ['brick', ['#b9b9b9']],
+          ['brick_2', ['#b9b9b9']],
         ]
       }
     }
@@ -74,7 +51,7 @@ class StationTile extends Tile {
     this.pathBuilder = new PathBuilder(tileSize, pathWidth, this.season.color)
     this.type = 'station';
     this.direction = direction;
-    this.color = this.season.color;
+    this.color = '#dcdcdc';
 
     // this.createTile()
   }
@@ -85,26 +62,86 @@ class StationTile extends Tile {
       this.direction = directions[randomInt(directions.length)];
     }
 
-    this.pathMap = this.pathBuilder.makePath(true);
-    this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 30, 30);
+    // this.pathMap = this.pathBuilder.makePath(true);
+    this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 10, 5);
     let trainPoint = this.createTrainStation(offset);
     objectsMap[`${trainPoint.x}_${trainPoint.y}`] = trainPoint;
     this.createShadows(shadowMap, trainPoint);
+    this.createBuildingArtifacts(artifactMap, this.pathWidth, this.tileSize, offset)
     this.streetMap = this.createStreets();
+  }
+
+  createBuildingArtifacts = (artifactMap, pathWidth, tileSize, offset) => {
+    this.artifactMap = artifactMap;
+    for (let x = this.pathWidth; x < this.pathWidth + this.tileSize; x++) {
+      let s = {
+        x: offset.x + x,
+        y: offset.y + this.pathWidth,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s.x}_${s.y}`] = s
+
+      let s2 = {
+        y: offset.y + x,
+        x: offset.x + this.pathWidth,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s2.x}_${s2.y}`] = s2
+      
+      let s3 = {
+        y: offset.y + x,
+        x: offset.x + this.pathWidth + this.tileSize - 1,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s3.x}_${s3.y}`] = s3
+
+          
+      let s4 = {
+        x: offset.x + x,
+        y: offset.y + this.pathWidth + this.tileSize - 2,
+        type: 'shadow',
+        data: {
+          color: 'darkgray'
+        }
+      }
+      artifactMap[`${s4.x}_${s4.y}`] = s4
+    }
+    for (let x = this.pathWidth; x < this.pathWidth + this.tileSize; x++) {
+
+      let s5 = {
+        x: offset.x + x,
+        y: offset.y + this.pathWidth + this.tileSize - 1,
+        type: 'shadow',
+        data: {
+          color: 'lightslategray'
+        }
+      }
+      artifactMap[`${s5.x}_${s5.y}`] = s5
+    }    
+    return artifactMap;
   }
 
   createShadows = (shadowMap, s) => {
     let boundingBox = {
-      x: s.x - 2,
+      x: s.x - 2 + this.pathWidth,
       w: 40,
-      y: s.y + 6,
+      y: s.y + 6 + this.pathWidth,
       h: 25
     }
     if (s.data.direction.enter == 'u') {
       boundingBox = {
-        x: s.x - 2,
+        x: s.x - 2 + this.pathWidth,
         w: 40,
-        y: s.y + 14,
+        y: s.y + 14 + this.pathWidth,
         h: 25
       }
     }
@@ -130,8 +167,8 @@ class StationTile extends Tile {
     let trainData = (new Station(direction)).data
     let trainPoint = {
       type: 'station',
-      x: this.pathWidth + offset.x,
-      y: this.pathWidth + offset.y,
+      x: offset.x,
+      y: offset.y,
       data: {
         ...trainData
       }
