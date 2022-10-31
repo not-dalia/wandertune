@@ -566,10 +566,10 @@ function start() {
 	canvas.setAttribute('height', town.style.height)
 	town.append(canvas);
 
-	elementMap.forEach((e, i) => {
+	/* elementMap.forEach((e, i) => {
 		let mapElement = createMapElement(e, i);
 		if (mapElement) town.append(mapElement);
-	})
+	}) */
 
 	const townBuilder = new TownBuilder(tileSize, pathWidth, pixelSize, availableTileCounts);
 	townBuilder.registerElementsFromMap(elementMap);

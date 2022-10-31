@@ -60,14 +60,14 @@ class River extends TileObject {
           this.direction.exit = this.directions[exitDirectionIndex]
         }
         this.boundary = [{
-          x: 31,
-          y: 0,
+          x: 28,
+          y: (this.direction.exit == 'u' || this.direction.enter == 'u') ? 0 : 80 - 55,
           w: 23,
-          h: 80,
+          h: 55,
         }, {
-          x: 0,
+          x: (this.direction.exit == 'l' || this.direction.enter == 'l') ? 0 : 80 - 54,
           y: 28,
-          w: 80,
+          w: 54,
           h: 27,
         }]
         break;
@@ -184,6 +184,11 @@ class RiverTile extends Tile {
     this.bridges = this.createBridges(riverPoint.data.direction);
     this.pathMap = this.pathBuilder.makePathFrame(hasStreets, areaSize, offset);
     this.createTrees(objectsMap, areaSize, offset)
+    this.extraData = {
+      subtype: this.river.subtype,
+      direction: this.river.direction,
+      rotation: this.river.rotation
+    }
   }
 
   createTrees = (treeMap, areaSize, offset) => {
@@ -303,6 +308,7 @@ class RiverTile extends Tile {
       }
     }
     objectsMap[`${riverPoint.x}_${riverPoint.y}`] = riverPoint; 
+    this.boundary = []
     this.river.boundary.forEach(b => {
       let riverBoundary = {
         minX: offset.x + b.x,
@@ -312,6 +318,7 @@ class RiverTile extends Tile {
         type: 'river'
       }
       this.busyAreas.insert(riverBoundary)
+      this.boundary.push(riverBoundary)
     })
     return riverPoint;
   }

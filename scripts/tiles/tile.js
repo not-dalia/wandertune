@@ -104,7 +104,9 @@ class Tile {
       shadowMap: this.shadowMap,
       artifactMap: this.artifactMap,
       bridges: this.bridges,
-      streets: this.streetMap
+      streets: this.streetMap,
+      boundary: this.boundary,
+      extraData: this.extraData
     }
   }
 

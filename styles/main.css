@@ -84,3 +84,70 @@ body {
 .node.last {
   background: #f00 !important;
 }
+
+.panner-conatiner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.listener {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  /* border-radius: 30px; */
+  /* background: red; */
+  transform: translateX(-50%) translateY(-50%);
+  outline: 6px solid red;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.listener:after {
+  width: 30px;
+  height: 30px;
+  border-radius: 30px;
+  background: red;
+  content: ' ';
+}
+
+.panner {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  background: purple;
+  transform: translateX(-50%) translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 30;
+}
+
+.panner:after {
+  content: attr(data-panner);
+  font-size: 2rem;
+  color: yellow;
+  display: block;
+  text-align: center;
+  flex: 1;
+  font-family: sans-serif;
+}
+
+.tile-borders {
+  position: absolute;
+  border: 3px solid black;
+  background: transparent;
+}
+
+.moved {
+  background: aqua !important;
+}
+
+.moved:after {
+  color: blue !important;
+}

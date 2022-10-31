@@ -115,7 +115,7 @@ class ForestTile extends Tile {
     this.createTrees(objectsMap, areaSize, offset);
     this.createShadows(shadowMap, objectsMap)
     this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 35, 30);
-    console.log(hasStreets)
+    // console.log(hasStreets)
     this.pathMap = this.pathBuilder.makePathFrame(hasStreets, areaSize, offset);
     return {objectsMap, shadowMap, artifactMap}
   }
