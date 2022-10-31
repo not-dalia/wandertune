@@ -305,7 +305,7 @@ class MapCanvas {
 const mapBuilder = new MapBuilder();
 
 let stepSize = 4;
-let updateRate = 1000;
+let updateRate = 200;
 let distanceRadius = 20 * pixelsPerMeter;
 
 
@@ -333,6 +333,7 @@ let audioArr = [];
 let listenerTimer;
 let animationFrame;
 let dynamicCompressor;
+let sampledPoints = []
 
 function initAudioContext() {
   AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -442,6 +443,33 @@ function moveCircle () {
   }
   updatePannerPositions()
   animationFrame = requestAnimationFrame(animateCircle);
+}
+
+let playIndex = 0;
+let playDirection = 1;
+function moveListenerOnPath () {
+  if (playIndex < 0 || playIndex >= sampledPoints.length) {
+    // playDirection = playDirection * -1;
+    // playIndex += playDirection
+    clearInterval(listenerTimer)
+    return
+  }
+  let point = sampledPoints[playIndex]
+  playIndex += playDirection;
+  listener.positionX.value = point.point[0]
+  listener.positionY.value = point.point[1]
+  if (point.direction) {
+    listener.forwardX.value = playDirection * point.direction[0]
+    listener.forwardY.value = playDirection * point.direction[1]
+  }
+  updatePannerPositions()
+  animationFrame = requestAnimationFrame(animateCircle);
+  // mapBuilder.mapCanvas.ctx.clearRect(0, 0, mapBuilder.mapCanvas.canvas.clientWidth, mapBuilder.mapCanvas.canvas.clientHeight)
+  // for (let i = 1; i < mousePathArr.length; i++) {
+  //   mapBuilder.mapCanvas.drawLine([mousePathArr[i-1], mousePathArr[i]], {strokeColor: 'orange'}, {})
+  // }
+  mapBuilder.mapCanvas.drawLine([point.point, [-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]]], { lineWidth: 2, strokeColor: 'black'}, {})
+  mapBuilder.mapCanvas.drawPoint([-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]], { radius: 5, color: 'black'})
 }
 
 function nearestPointOnGeoLine(geoLine, geoPoint) {
@@ -562,8 +590,11 @@ function initMap(walkingPace = 4) {
 function playAudio () {
   canDrawPath = false
   audioArr.forEach(a => a.play())
+  playIndex = 0;
+  playDirection = 1;
+  clearInterval(listenerTimer)
 
-  listenerTimer = setInterval(moveCircle, updateRate)
+  listenerTimer = setInterval(moveListenerOnPath, updateRate)
   animateCircle()
   updatePannerPositions()
 }
@@ -577,11 +608,12 @@ window.addEventListener('mouseup', (e) => {
   updatePannerPositions() */
   if (!canDrawPath) return
   mousePathArr.push([e.clientX, e.clientY])
-  mapBuilder.mapCanvas.drawPoint([e.clientX, e.clientY], {color: 'orange', radius: 20})
+  mapBuilder.mapCanvas.drawPoint([e.clientX, e.clientY], {color: 'orange', radius: 5 })
   if (mousePathArr.length > 1) {
     mapBuilder.mapCanvas.drawLine([mousePathArr[mousePathArr.length - 2], mousePathArr[mousePathArr.length - 1]], {strokeColor: 'orange'}, {})
   }
 })
+
 
 function samplePathLine() {
   let pathArr = [...mousePathArr]
@@ -590,32 +622,38 @@ function samplePathLine() {
   if (pathArr.length == 1) {
     return [pathArr[0]]
   }
-  let pathOver = false
-  let sampledPoints = [pathArr[0]]
+  let isPathOver = false
+  sampledPoints = [{ point: pathArr[0], direction: pathArr[1] ? [pathArr[1][0] - pathArr[0][0], pathArr[1][1] - pathArr[0][1]] : null}]
   let lineIndex = 1;
   let prevPoint = pathArr[0];
   let remainingDistance = stepSize;
   // TODO: Fix sampledPoint when the distance to end of line is shorter than it needs to be
-  while (!pathOver) {
+  while (!isPathOver) {
     let line = [prevPoint, pathArr[lineIndex]]
-    let samplePoint = findPointOnLineByDistance(line, remainingDistance)
-    let distanceFromEnd = pointDistance(samplePoint, line[1])
-    if (distanceFromEnd < stepSize) {
-      remainingDistance = stepSize - remainingDistance
+    // let direction = [line[0][0] - line[1][0], line[0][1] - line[1][1]]
+    let distanceFromEnd = pointDistance(prevPoint, line[1])
+    if (distanceFromEnd < stepSize && remainingDistance > distanceFromEnd) {
+      // sampledPoints.push(samplePoint)
+      remainingDistance = remainingDistance - distanceFromEnd
       lineIndex += 1
       if (lineIndex >= pathArr.length) {
-        sampledPoints.push(line[1])
-        pathOver = true
+        sampledPoints.push({ point: line[1] })
+        isPathOver = true
       }
       prevPoint = pathArr[lineIndex - 1]
     } else {
-      sampledPoints.push(samplePoint)
+      let samplePoint = findPointOnLineByDistance(line, remainingDistance)
+      sampledPoints.push({ point: samplePoint })
       remainingDistance = stepSize
       prevPoint = samplePoint
     }
   }
-  sampledPoints.forEach(p => {
-    mapBuilder.mapCanvas.drawPoint(p, {color: "blue", radius: 10})
+  let turningDuration = 4000;
+  let turningSamples = turningDuration / updateRate;
+  sampledPoints.forEach((p, i) => {
+    let lookingAtPoint = sampledPoints[Math.min(i + turningSamples, sampledPoints.length - 1)]
+    p.direction = [p.point[0] - lookingAtPoint.point[0], p.point[1] - lookingAtPoint.point[1]]
+    mapBuilder.mapCanvas.drawPoint(p.point, {color: "blue", radius: 2})
   })
 }
 
