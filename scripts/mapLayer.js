@@ -37,7 +37,8 @@ class MapBuilder {
 
   buildMap (mapData) {
     if (this.built) return this.map;
-    pannerContainer = document.querySelector('.panner-container');
+    this.mapCanvas = new MapCanvas('.panner-container');
+    // pannerContainer = document.querySelector('.panner-container');
     mapData.forEach((e, i) => {
       if (e.type != 'tile') return
       const x1 = e.locX + pathWidth;
@@ -50,25 +51,42 @@ class MapBuilder {
       this.addTileToMap(coordinates, e.tileData.type, i);
 
       if (e.tileData.boundary) {
+        let resultPoly;
         e.tileData.boundary.forEach(b => {
           let {minX, minY, maxX, maxY} = b
           minX = Math.max(minX * pixelSize, e.locX + pathWidth/2)
           maxX = Math.min(maxX * pixelSize, e.locX + e.w - pathWidth/2)
           minY = Math.max(minY * pixelSize, e.locY + pathWidth/2)
           maxY = Math.min(maxY * pixelSize, e.locY + e.h - pathWidth/2)
-          const item = {...b, minX, minY, maxX, maxY}
-          item.lineString = turf.lineString([[minX, minY], [minX, maxY], [maxX, maxY], [maxX, minY], [minX, minY]])
-          item.index = i
-          this.tree.insert(item);
-          console.log(item)
-          let border = document.createElement('div')
+          let poly = turf.polygon([[[minX, minY], [minX, maxY], [maxX, maxY], [maxX, minY], [minX, minY]]])
+          if (!resultPoly) resultPoly = poly
+          else resultPoly = turf.union(resultPoly, poly)
+          /* let border = document.createElement('div')
           border.classList.add('tile-borders')
           border.style.top = `${item.minY}px`
           border.style.left = `${item.minX}px`
           border.style.width = `${item.maxX - item.minX}px`
           border.style.height = `${item.maxY - item.minY}px`
-          pannerContainer.append(border)
+          pannerContainer.append(border) */
         })
+        const item = {
+          minX: Number.MAX_VALUE,
+          minY: Number.MAX_VALUE,
+          maxX: Number.MIN_VALUE,
+          maxY: Number.MIN_VALUE,
+        }
+
+        resultPoly.geometry.coordinates[0].forEach(p => {
+          if (p[0] < item.minX) item.minX = p[0]
+          if (p[0] > item.maxX) item.maxX = p[0]
+          if (p[1] < item.minY) item.minY = p[1]
+          if (p[1] > item.maxY) item.maxY = p[1]
+        })
+
+        item.lineString = turf.lineString(resultPoly.geometry.coordinates[0])
+        item.index = i
+        this.tree.insert(item);
+        this.mapCanvas.drawPolygon(resultPoly)
       } else {
         const item = {
           minX: e.locX + pathWidth,
@@ -79,13 +97,14 @@ class MapBuilder {
           lineString: turf.lineString(coordinates)
         };
         this.tree.insert(item);
-        let border = document.createElement('div')
+        this.mapCanvas.drawPolygon([[[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]]])
+        /* let border = document.createElement('div')
         border.classList.add('tile-borders')
         border.style.top = `${item.minY}px`
         border.style.left = `${item.minX}px`
         border.style.width = `${item.maxX - item.minX}px`
         border.style.height = `${item.maxY - item.minY}px`
-        pannerContainer.append(border)
+        pannerContainer.append(border) */
       }
     });
     this.built = true;
@@ -98,10 +117,195 @@ class MapBuilder {
 /*******************************************************************************************************/
 /*******************************************************************************************************/
 /*******************************************************************************************************/
+
+class MapCanvas {
+  constructor (parentElementSelector, width, height) {
+    this.parentElement = document.querySelector(parentElementSelector)
+    if (!this.parentElement) throw new Error(`Could not find ${parentElementSelector}`)
+    if (!width) width = this.parentElement.clientWidth
+    if (!height) height = this.parentElement.clientHeight
+    this.canvas = this._createCanvas(width, height)
+	  this.parentElement.append(this.canvas);
+    this.ctx = this.canvas.getContext('2d');
+  }
+
+  _createCanvas (width, height) {
+    let canvas = document.createElement("canvas")
+	  canvas.id = `wt-map-canvas`
+	  canvas.style.top = 0;
+	  canvas.style.left = 0;
+	  canvas.style.width = `${width}px`
+	  canvas.style.height = `${height}px`
+	  canvas.setAttribute('width', width)
+	  canvas.setAttribute('height', height)
+
+    return canvas
+  }
+
+  drawPoint(point, inputProperties = {}) {
+    let coordinates;
+    let properties = {
+      color: 'black',
+      radius: 4,
+      fill: true,
+      strokeColor: 'black',
+      stroke: false,
+      lineWidth: 10,
+      ...inputProperties
+    }
+    if (typeof point !== 'object') throw new Error('Wrong point format')
+    if (Array.isArray(point)) {
+      coordinates = point
+    } else {
+      coordinates = point.geometry.coordinates
+      properties = { ...properties, ...point.geometry.properties }
+    }
+    if (coordinates.length < 2 || coordinates.some(c => (typeof c !== 'number'))) throw new Error('Wrong point format')
+
+    this.ctx.beginPath()
+    this.ctx.moveTo(coordinates[0], coordinates[1])
+    this.ctx.arc(coordinates[0], coordinates[1], properties.radius, 0, 2 * Math.PI)
+    if (properties.fill) {
+      this.ctx.fillStyle = properties.color
+      this.ctx.fill()
+    }
+    if (properties.stroke || !properties.fill) {
+      this.ctx.strokeStyle = properties.strokeColor || properties.color
+      this.ctx.lineWidth = properties.lineWidth
+      this.ctx.stroke()
+    }
+    
+  }
+
+  drawLine (line, inputProperties = {}, {isNew = true, isToBeContinued = false, isClosed = false}) {
+    let coordinates;
+    let properties = {
+      color: 'black',
+      fill: false,
+      strokeColor: 'black',
+      stroke: true,
+      lineWidth: 10,
+      ...inputProperties
+    }
+    if (typeof line !== 'object') throw new Error('Wrong line format')
+    if (Array.isArray(line)) {
+      coordinates = line
+    } else {
+      coordinates = line.geometry.coordinates
+      properties = { ...properties, ...line.geometry.properties }
+    }
+    
+    if (isNew) this.ctx.beginPath()
+    this.ctx.moveTo(coordinates[0][0], coordinates[0][1]);
+    for (let i = 1; i < coordinates.length; i++) {
+      this.ctx.lineTo(coordinates[i][0], coordinates[i][1]);
+    }
+
+    if (isClosed) this.ctx.closePath()
+    if (!isToBeContinued) {
+      if (properties.fill) {
+        this.ctx.fillStyle = properties.color
+        this.ctx.fill()
+      }
+      if (properties.stroke || !properties.fill) {
+        this.ctx.strokeStyle = properties.strokeColor || properties.color
+        this.ctx.lineWidth = properties.lineWidth
+        this.ctx.stroke()
+      }
+    }
+  }
+
+  drawPolygon(polygon, inputProperties = {}) {
+    let polygons;
+    let properties = {
+      color: 'black',
+      fill: false,
+      strokeColor: 'black',
+      stroke: true,
+      lineWidth: 4,
+      ...inputProperties
+    }
+    if (typeof polygon !== 'object') throw new Error('Wrong polygon format')
+    if (Array.isArray(polygon)) {
+      polygons = polygon
+    } else {
+      polygons = polygon.geometry.coordinates
+      properties = { ...properties, ...polygon.geometry.properties }
+    }
+    const hasInteriors = polygons.length > 1
+    const exterior = polygons[0]
+    if (!this._isClockwise(exterior)) exterior.reverse()
+    this.drawLine(exterior, properties, {isNew: true, isToBeContinued: hasInteriors, isClosed: true})
+    for (let i = 1; i < polygons.length; i++) {
+      const interior = polygons[i]
+      if (this._isClockwise(interior)) interior.reverse()
+      this.drawLine(exterior, properties, {isNew: true, isToBeContinued: i < polygons.length - 1, isClosed: true})
+    }
+  }
+
+  _isClockwise(points) {
+    let area = 0;
+    for (let i = 0; i < points.length; i++) {
+        let j = (i + 1) % points.length
+        area += points[i][0] * points[j][1];
+        area -= points[j][0] * points[i][1];
+    }
+    return (area / 2) > 0;
+  }
+
+  _sortPoints(inputPoints, order='clockwise') {
+    const points = [...inputPoints]
+    const center = [];
+
+    //sort horizontally then minmax to find centerX, sort vertically then minmax to find centerY
+    points.sort((a, b) => (a[0] - b[0]))
+    center[0] = (points[0][0] + points[points.length - 1][0]) / 2
+    
+    points.sort((a, b) => (a[1] - b[1]))
+    center[1] = (points[0][1] + points[points.length - 1][1]) / 2
+
+    let startingAngle;
+    let pointAngles = {}
+    points.forEach((p, i) => {
+      let angle = this.getLineAngle(p, center)
+      if (!startingAngle) {
+        startAngle = angle
+      } else if (angle < startingAngle) {
+        angle += Math.PI * 2
+      }
+      pointAngles[p.join(',')] = angle
+    })
+
+    points.sort((a, b) => (pointAngles[a.join(',')] - pointAngles[b.join(',')]))
+
+    if (order === 'counterclockwise') points = points.reverse()
+
+    points.unshift(points.pop())
+    return points
+  }
+
+  getLineAngle (end, start = [0, 0], unit = 'radians') {
+    let angle = Math.atan2(end[1] - start[1], end[0] - start[0])   //radians
+    
+    if (unit === 'degrees' || unit === 'degree') {
+      angle = 180 * angle / Math.PI
+    }
+    // return (360+Math.round(degrees))%360; //round number, avoid decimal fragments
+    return angle
+  }
+}
+
+
+
+/*******************************************************************************************************/
+/*******************************************************************************************************/
+/*******************************************************************************************************/
+/*******************************************************************************************************/
+/*******************************************************************************************************/
 const mapBuilder = new MapBuilder();
 
 let stepSize = 4;
-let updateRate = 100;
+let updateRate = 1000;
 let distanceRadius = 20 * pixelsPerMeter;
 
 
@@ -283,7 +487,15 @@ function pointDistance(point1, point2) {
 
 function updatePannerPositions () {
   let selectedPanners = document.querySelectorAll('.panner.moved') 
+  let pannersToMove = mapBuilder.tree.search({
+    minX: listener.positionX.value - distanceRadius,
+    maxX: listener.positionX.value + distanceRadius,
+    minY: listener.positionY.value - distanceRadius,
+    maxY: listener.positionY.value + distanceRadius,
+  })
+  let indexes = pannersToMove.map((p) => p.index)
   selectedPanners.forEach(p => {
+    if (indexes.includes(p.dataset.index)) return;
     p.classList.remove('moved')
     let i = p.dataset.index
     let pannerObj = pannersDict[i]
@@ -297,12 +509,6 @@ function updatePannerPositions () {
       }
       pannerObj.connected = false;
     }
-  })
-  let pannersToMove = mapBuilder.tree.search({
-    minX: listener.positionX.value - distanceRadius,
-    maxX: listener.positionX.value + distanceRadius,
-    minY: listener.positionY.value - distanceRadius,
-    maxY: listener.positionY.value + distanceRadius,
   })
   let currentPoint = turf.point([listener.positionX.value, listener.positionY.value])
   pannersToMove.forEach(p => {
@@ -333,7 +539,9 @@ function setStepSizeFromPace (pace) {
   stepSize = Math.round((pace * 1000 * pixelsPerMeter) / (60 * 60 / (updateRate / 1000)));
 }
 
-function playAudio (walkingPace = 4) {
+let canDrawPath = false;
+
+function initMap(walkingPace = 4) {
   pannerContainer = document.querySelector('.panner-container');
   pannerContainer.innerHTML = '';
   pannersDict = {};
@@ -348,6 +556,11 @@ function playAudio (walkingPace = 4) {
   assignPanners()
   setStepSizeFromPace(walkingPace)
   mapBuilder.buildMap(elementMap)
+  canDrawPath = true
+}
+
+function playAudio () {
+  canDrawPath = false
   audioArr.forEach(a => a.play())
 
   listenerTimer = setInterval(moveCircle, updateRate)
@@ -355,13 +568,66 @@ function playAudio (walkingPace = 4) {
   updatePannerPositions()
 }
 
+let mousePathArr = []
 window.addEventListener('mouseup', (e) => {
-  if (!listener) return;
+  /* if (!listener) return;
   listener.positionX.value = e.clientX
   listener.positionY.value = e.clientY
   animateCircle()
-  updatePannerPositions()
+  updatePannerPositions() */
+  if (!canDrawPath) return
+  mousePathArr.push([e.clientX, e.clientY])
+  mapBuilder.mapCanvas.drawPoint([e.clientX, e.clientY], {color: 'orange', radius: 20})
+  if (mousePathArr.length > 1) {
+    mapBuilder.mapCanvas.drawLine([mousePathArr[mousePathArr.length - 2], mousePathArr[mousePathArr.length - 1]], {strokeColor: 'orange'}, {})
+  }
 })
+
+function samplePathLine() {
+  let pathArr = [...mousePathArr]
+  if (stepSize < 0 || pathArr.length == 0) return
+  canDrawPath = false
+  if (pathArr.length == 1) {
+    return [pathArr[0]]
+  }
+  let pathOver = false
+  let sampledPoints = [pathArr[0]]
+  let lineIndex = 1;
+  let prevPoint = pathArr[0];
+  let remainingDistance = stepSize;
+  // TODO: Fix sampledPoint when the distance to end of line is shorter than it needs to be
+  while (!pathOver) {
+    let line = [prevPoint, pathArr[lineIndex]]
+    let samplePoint = findPointOnLineByDistance(line, remainingDistance)
+    let distanceFromEnd = pointDistance(samplePoint, line[1])
+    if (distanceFromEnd < stepSize) {
+      remainingDistance = stepSize - remainingDistance
+      lineIndex += 1
+      if (lineIndex >= pathArr.length) {
+        sampledPoints.push(line[1])
+        pathOver = true
+      }
+      prevPoint = pathArr[lineIndex - 1]
+    } else {
+      sampledPoints.push(samplePoint)
+      remainingDistance = stepSize
+      prevPoint = samplePoint
+    }
+  }
+  sampledPoints.forEach(p => {
+    mapBuilder.mapCanvas.drawPoint(p, {color: "blue", radius: 10})
+  })
+}
+
+function findPointOnLineByDistance([p1, p2], distance) {
+  let dx = p2[0] - p1[0];
+  let dy = p2[1] - p1[1];
+  let coef = distance / pointDistance(p1, p2);
+
+  let x = p1[0] + dx * coef;
+  let y = p1[1] + dy *coef;
+  return [x, y]
+}
 
 
 window.addEventListener('keydown', (e) => {

@@ -61,14 +61,14 @@ class River extends TileObject {
         }
         this.boundary = [{
           x: 28,
-          y: (this.direction.exit == 'u' || this.direction.enter == 'u') ? 0 : 80 - 55,
-          w: 23,
-          h: 55,
+          y: (this.direction.exit == 'u' || this.direction.enter == 'u') ? 0 : 80 - 53,
+          w: 25,
+          h: 53,
         }, {
-          x: (this.direction.exit == 'l' || this.direction.enter == 'l') ? 0 : 80 - 54,
+          x: (this.direction.exit == 'l' || this.direction.enter == 'l') ? 0 : 80 - 50,
           y: 28,
-          w: 54,
-          h: 27,
+          w: 50,
+          h: 25,
         }]
         break;
       case 'lake':
