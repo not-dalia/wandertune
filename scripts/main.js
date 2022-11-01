@@ -18,135 +18,10 @@ function calculateAvailableTiles(availableSpace) {
 	}
 }
 
-function generateTileQuarter(nodeX, nodeY, transparent = []) {
-	let quarterMap = [];
-	let quarterArea = (tileSize + pathWidth) / 4;
-	quarterMap.push({
-		x: nodeX,
-		y: nodeY,
-		locX: nodeX * quarterArea,
-		locY: nodeY * quarterArea,
-		type: 'node',
-		w: pathWidth,
-		h: pathWidth,
-	})
-	quarterMap.push({
-		x: nodeX + 1,
-		y: nodeY,
-		locX: nodeX * quarterArea + pathWidth,
-		locY: nodeY * quarterArea,
-		type: 'path',
-		orientation: 'h',
-		w: (tileSize - pathWidth) / 2,
-		h: pathWidth,
-	})
-	quarterMap.push({
-		x: nodeX,
-		y: nodeY + 1,
-		locX: nodeX * quarterArea,
-		locY: nodeY * quarterArea + pathWidth,
-		type: 'path',
-		orientation: 'v',
-		w: pathWidth,
-		h: (tileSize - pathWidth) / 2,
-	})
-	transparent.forEach(n => {
-		quarterMap[n].transparent = true;
-	})
-	return quarterMap
-}
-
 function generateTileMap(availableTileCounts) {
 	let elementMap = [];
 	for (let ty = 0; ty < availableTileCounts.y + 1; ty++) {
 		for (let tx = 0; tx < availableTileCounts.x + 1; tx++) {
-			if (tx == availableTileCounts.x) {
-				elementMap.push({
-					x: tx * 4,
-					y: ty * 4,
-					locX: tx * (tileSize + pathWidth),
-					locY: ty * (tileSize + pathWidth),
-					type: 'node',
-					w: pathWidth,
-					h: pathWidth,
-				})
-				if (ty != availableTileCounts.y) {
-					elementMap.push({
-						x: tx * 4,
-						y: ty * 4 + 1,
-						locX: tx * (tileSize + pathWidth),
-						locY: ty * (tileSize + pathWidth) + pathWidth,
-						type: 'path',
-						orientation: 'v',
-						w: pathWidth,
-						h: (tileSize - pathWidth) / 2,
-					})
-
-					elementMap.push({
-						x: tx * 4,
-						y: ty * 4 + 2,
-						locX: tx * (tileSize + pathWidth),
-						locY: ty * (tileSize + pathWidth) + pathWidth / 2 + tileSize / 2,
-						type: 'node',
-						w: pathWidth,
-						h: pathWidth,
-					})
-
-					elementMap.push({
-						x: tx * 4,
-						y: ty * 4 + 3,
-						locX: tx * (tileSize + pathWidth),
-						locY: ty * (tileSize + pathWidth) + 1.5 * pathWidth + tileSize / 2,
-						type: 'path',
-						orientation: 'v',
-						w: pathWidth,
-						h: (tileSize - pathWidth) / 2,
-					})
-				}
-			}
-			if (ty == availableTileCounts.y) {
-				elementMap.push({
-					x: tx * 4,
-					y: ty * 4,
-					locX: tx * (tileSize + pathWidth),
-					locY: ty * (tileSize + pathWidth),
-					type: 'node',
-					w: pathWidth,
-					h: pathWidth,
-				})
-				if (tx != availableTileCounts.x) {
-					elementMap.push({
-						x: tx * 4 + 1,
-						y: ty * 4,
-						locX: tx * (tileSize + pathWidth) + pathWidth,
-						locY: ty * (tileSize + pathWidth),
-						type: 'path',
-						orientation: 'h',
-						w: (tileSize - pathWidth) / 2,
-						h: pathWidth,
-					})
-					elementMap.push({
-						x: tx * 4 + 2,
-						y: ty * 4,
-						locX: tx * (tileSize + pathWidth) + pathWidth / 2 + tileSize / 2,
-						locY: ty * (tileSize + pathWidth),
-						type: 'node',
-						w: pathWidth,
-						h: pathWidth,
-					})
-					elementMap.push({
-						x: tx * 4 + 3,
-						y: ty * 4,
-						locX: tx * (tileSize + pathWidth) + 1.5 * pathWidth + tileSize / 2,
-						locY: ty * (tileSize + pathWidth),
-						type: 'path',
-						orientation: 'h',
-						w: (tileSize - pathWidth) / 2,
-						h: pathWidth,
-					})
-				}
-
-			}
 			if (tx == availableTileCounts.x || ty == availableTileCounts.y) continue;
 			elementMap.push({
 				x: tx * 4 + 1,
@@ -157,13 +32,7 @@ function generateTileMap(availableTileCounts) {
 				orientation: 'v',
 				w: tileSize + 2 * pathWidth,
 				h: tileSize + 2 * pathWidth,
-				// tileData: randomTile(tileSize)
 			})
-
-			elementMap = elementMap.concat(generateTileQuarter(tx * 4, ty * 4))
-			elementMap = elementMap.concat(generateTileQuarter(tx * 4 + 2, ty * 4, [2]))
-			elementMap = elementMap.concat(generateTileQuarter(tx * 4, ty * 4 + 2, [1]))
-			elementMap = elementMap.concat(generateTileQuarter(tx * 4 + 2, ty * 4 + 2, [1, 2]))
 		}
 	}
 	return elementMap
@@ -307,7 +176,7 @@ async function drawTiles(objectsMap, shadowMap, artifactMap, busyAreas) {
 
 	for (let i = 0; i < elementMap.length; i++) {
 		let item = elementMap[i];
-		if (item.type == 'tile' && item.tileData) {
+		if (item.tileData) {
 			ctx.resetTransform();
 			ctx.translate(item.locX, item.locY)
 			if (!backgroundSet && item.tileData.color) {
@@ -336,7 +205,7 @@ async function drawTiles(objectsMap, shadowMap, artifactMap, busyAreas) {
 	
 	for (let i = 0; i < elementMap.length; i++) {
 		let item = elementMap[i];
-		if (item.type == 'tile' && item.tileData) {
+		if (item.tileData) {
 			ctx.resetTransform();
 			ctx.translate(item.locX, item.locY)
 
@@ -566,11 +435,6 @@ function start() {
 	canvas.setAttribute('height', town.style.height)
 	town.append(canvas);
 
-	/* elementMap.forEach((e, i) => {
-		let mapElement = createMapElement(e, i);
-		if (mapElement) town.append(mapElement);
-	}) */
-
 	const townBuilder = new TownBuilder(tileSize, pathWidth, pixelSize, availableTileCounts);
 	townBuilder.registerElementsFromMap(elementMap);
 	let riverLength = townBuilder.createRiverPath();
@@ -580,24 +444,6 @@ function start() {
 	townBuilder.createTownCentre();
 	townBuilder.generateStreets();
 	townBuilder.generateAllTilesData(elementMap);
-
-	// let riverLength = createRiverPath(elementMap, availableTileCounts)
-	// if (riverLength < (availableTileCounts.x * availableTileCounts.y) * 0.2) createRiverPath(elementMap, availableTileCounts)
-	// createTrainStationTile(elementMap, availableTileCounts)
-	// let townArea = {
-	// 	x: randomInt(availableTileCounts.x),
-	// 	y: randomInt(availableTileCounts.y)
-	// }
-	// console.log(`townArea: ${townArea.x},${townArea.y}`)
-	// let radius = Math.max(Math.max(2, availableTileCounts.x * 0.2, availableTileCounts.y * 0.2 ), randomInt(Math.max(townArea.x, availableTileCounts.x - townArea.x, townArea.y, availableTileCounts.y - townArea.y)))
-	// console.log(`radius: ${radius}`)
-
-	// elementMap.forEach((e, i) => {
-	// 	if (e.type != 'tile' || e.tileData) return
-	// 	let distance = Math.pow((Math.pow(townArea.x - ((e.x - 1)/4), 2) + Math.pow(townArea.y - ((e.y - 1)/4), 2)),0.5)
-	// 	if (distance <= radius) e.tileData = randomTile(distance/radius * 100).data
-	// 	else e.tileData = randomTile(95).data
-	// })
 
 	drawTiles(townBuilder.objectsMap, townBuilder.shadowMap, townBuilder.artifactMap, townBuilder.busyAreas);
 	console.log(townBuilder.busyAreas.all())

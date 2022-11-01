@@ -46,7 +46,6 @@ class TownBuilder {
   registerElementsFromMap(elementMap) {
     this.elementMap = elementMap;
     elementMap.forEach((e, i) => {
-      if (e.type != 'tile') return;
       let tileCoords = this.getCoordsFromMapElement(e);
       let id = `${tileCoords.x}_${tileCoords.y}`;
       this._tiles[id] = {

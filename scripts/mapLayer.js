@@ -357,10 +357,9 @@ function setListenerForward (forwardX, forwardY) {
 
 function assignPanners () {
   elementMap.forEach((e, i) => {
-    if (e.type !== 'tile') return
-    if (e.type == 'tile' && e.tileData.type == 'forest') createElementPanner(e, 'audio/forest.ogg', i)
-    if (e.type == 'tile' && e.tileData.type == 'buildings') createElementPanner(e, 'audio/cafe.ogg', i)
-    if (e.type == 'tile' && e.tileData.type == 'river') createElementPanner(e, 'audio/river2.ogg', i)
+    if (e.tileData.type == 'forest') createElementPanner(e, 'audio/forest.ogg', i)
+    if (e.tileData.type == 'buildings') createElementPanner(e, 'audio/cafe.ogg', i)
+    if (e.tileData.type == 'river') createElementPanner(e, 'audio/river2.ogg', i)
   })
 }
 
