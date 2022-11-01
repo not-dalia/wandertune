@@ -10,18 +10,21 @@
   <!-- <script src="//unpkg.com/alpinejs" defer></script> -->
   <script src="//unpkg.com/rbush@2.0.1/rbush.js"></script>
   <script src='//unpkg.com/@turf/turf@6/turf.min.js'></script>
+
   <script src="scripts/consts.js"></script>
-  <script src="scripts/artifact.js"></script>
-  <script src="scripts/path.js"></script>
-  <script src="scripts/tiles/tile.js"></script>
-  <script src="scripts/tiles/forest.js"></script>
-  <script src="scripts/tiles/river.js"></script>
-  <script src="scripts/tiles/building.js"></script>
-  <script src="scripts/tiles/station.js"></script>
+
+  <<!-- script src="scripts/town-generator/artifact.js"></script>
+  <script src="scripts/town-generator/path.js"></script>
+  <script src="scripts/town-generator/tiles/tile.js"></script>
+  <script src="scripts/town-generator/tiles/forest.js"></script>
+  <script src="scripts/town-generator/tiles/river.js"></script>
+  <script src="scripts/town-generator/tiles/building.js"></script>
+  <script src="scripts/town-generator/tiles/station.js"></script>
+  <script src="scripts/town-generator/town-builder.js"></script>
+  <script src="scripts/town-generator/tiledefs.js"></script> -->
+  <script type="module" src="scripts/town-generator/index.js"></script>
   
-  <script src="scripts/town-builder.js"></script>
-  <script src="scripts/tiledefs.js"></script>
-  <script src="scripts/mapLayer.js"></script>
+  <script  type="module" src="scripts/mapLayer.js"></script>
 </head>
 
 <body>
@@ -31,7 +34,7 @@
   <div class="panner-container">
 
   </div>
-  <script src="scripts/main.js"></script>
+  <script type="module" src="scripts/main.js"></script>
 </body>
 
 </html>

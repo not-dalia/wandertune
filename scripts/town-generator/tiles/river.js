@@ -1,3 +1,7 @@
+import { Tile, TileObject, PathBuilder } from '../index.js'
+import { Tree } from './forest.js'
+import { Season } from './season.js'
+
 class River extends TileObject {
   constructor(type, direction) {
     super();
@@ -323,3 +327,5 @@ class RiverTile extends Tile {
     return riverPoint;
   }
 }
+
+export { RiverTile }

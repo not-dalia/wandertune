@@ -10,8 +10,12 @@ const randomInt = (upperLimit, type = 'all') => {
   }
 }
 
-const directions = ['u', 'r', 'd', 'l'];
 const pixelSize = 4;
 const pathWidth = 60;
 const tileSize = 200;
+const streetColor = '#546e7a'
+const directions = ['u', 'r', 'd', 'l'];
 const currentSeason = ['spring', 'summer', 'autumn', 'winter'][randomInt(4)];
+
+const pixelsPerMeter = 30;
+

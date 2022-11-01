@@ -296,3 +296,5 @@ class PathBuilder {
     return rowPoints;
   }
 }
+
+export { PathBuilder }

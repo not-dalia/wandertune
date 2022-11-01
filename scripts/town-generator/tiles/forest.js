@@ -1,3 +1,8 @@
+import { Tile, TileObject, PathBuilder } from '../index.js'
+import { Season } from './season.js'
+
+let treeShadowRows = {}
+
 class Tree extends TileObject {
   constructor(type, ext = 'png') {
     super();
@@ -181,28 +186,39 @@ class ForestTile extends Tile {
       }
 
       // Make rounded shadows. Rows increase width by 2 every step until half of shadow height then decrease 2
-      let xRows = new Array(boundingBox.h).fill(0).map((e, i) => {
-        if (i >= boundingBox.h / 2) {
-          return boundingBox.w - (i - boundingBox.h / 2) * 2
-        } else {
-          return boundingBox.w - ((boundingBox.h / 2 - (i + 1))) * 2
+      if (!treeShadowRows[t.data.subtype]) {
+        treeShadowRows[t.data.subtype] = []
+        let zeroBoundingBox = {
+          x: 2,
+          w: t.data.width - 4,
+          y: t.data.height - 5,
+          h: 8
         }
-      })
-      for (let sy = boundingBox.y; sy < boundingBox.y + boundingBox.h; sy++) {
-        for (let sx = boundingBox.x; sx < boundingBox.x + boundingBox.w; sx++) {
-          let missingCorner = (boundingBox.w - xRows[sy - boundingBox.y]) / 2
-          if (sx - boundingBox.x < missingCorner || sx - boundingBox.x >= missingCorner + xRows[sy - boundingBox.y]) continue;
-          shadowMap[`${sx}_${sy}`] = {
-            type: 'shadow',
-            x: sx,
-            y: sy,
-            data: {
-              parent: k
-            }
+        let xRows = new Array(zeroBoundingBox.h).fill(0).map((e, i) => {
+          if (i >= zeroBoundingBox.h / 2) {
+            return zeroBoundingBox.w - (i - zeroBoundingBox.h / 2) * 2
+          } else {
+            return zeroBoundingBox.w - ((zeroBoundingBox.h / 2 - (i + 1))) * 2
+          }
+        })
+        for (let sy = zeroBoundingBox.y; sy < zeroBoundingBox.y + zeroBoundingBox.h; sy++) {
+          for (let sx = zeroBoundingBox.x; sx < zeroBoundingBox.x + zeroBoundingBox.w; sx++) {
+            let missingCorner = (zeroBoundingBox.w - xRows[sy - zeroBoundingBox.y]) / 2
+            if (sx - zeroBoundingBox.x < missingCorner || sx - zeroBoundingBox.x >= missingCorner + xRows[sy - zeroBoundingBox.y]) continue;
+            treeShadowRows[t.data.subtype].push([sx, sy])
           }
         }
       }
+      let zeroShadow = treeShadowRows[t.data.subtype]
+      zeroShadow.forEach(p => {
+        let sy = p[1] + t.y
+        let sx = p[0] + t.x
+        if (!shadowMap[sy]) shadowMap[sy] = {}
+        shadowMap[sy][sx] = true
+      })
     })
     return shadowMap
   }
 }
+
+export { ForestTile, Tree }

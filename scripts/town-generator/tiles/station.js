@@ -1,31 +1,31 @@
+import { Tile, TileObject, PathBuilder } from '../index.js'
+import { Season } from './season.js'
 
-class Building extends TileObject {
-  constructor(type, ext = 'png') {
+class Station extends TileObject {
+  constructor(direction) {
     super();
-    this.type = 'building';
-    this.subtype = type;
-    this.width = 24;
-    this.height = 30;
-    this.src = `tiles/building/${type}.${ext}`;
+
+    this.type = 'station';
+    this.width = 50;
+    this.height = 50;
+    this.direction = {};
+    this.direction.enter = direction;
+    this.src = `tiles/station/station_${direction}.png`;
   }
 }
 
-class BuildingsTile extends Tile {
+class StationTile extends Tile {
   constructor({
     season,
     tileSize,
     pathWidth,
     pixelSize,
-    type
+    type,
+    direction
   }) {
     super();
+
     const seasonsData = {
-      buildings: {
-        summer: [new Building('building_1'), new Building('building_2'), new Building('building_3')],
-        spring: [new Building('building_1'), new Building('building_2'), new Building('building_3')],
-        autumn: [new Building('building_1'), new Building('building_2'), new Building('building_3')],
-        winter: [new Building('building_1'), new Building('building_2'), new Building('building_3')]
-      },
       artifacts: {
         summer: [
           ['brick', ['#b9b9b9']],
@@ -48,28 +48,32 @@ class BuildingsTile extends Tile {
 
     this.season = new Season(season);
     this.season.setArtifacts(seasonsData.artifacts[season]);
-    this.season.setBuildings(seasonsData.buildings[season]);
     this.tileSize = tileSize;
     this.pathWidth = pathWidth;
     this.pixelSize = pixelSize;
-    this.type = 'buildings';
+    this.pathBuilder = new PathBuilder(tileSize, pathWidth, this.season.color)
+    this.type = 'station';
+    this.direction = direction;
     this.color = '#dcdcdc';
-    this.pathColor = '#303e44'
-    this.pathBuilder = new PathBuilder(this.tileSize, this.pathWidth, this.season.color)
-    this.objectKeys = []
+
     // this.createTile()
   }
 
   createTile = ({objectsMap={}, shadowMap={}, artifactMap={}, busyAreas={}}, areaSize, offset) => {
+    const directions = ['u', 'r', 'd', 'l'];
+    if (!this.direction) {
+      this.direction = directions[randomInt(directions.length)];
+    }
+
     // this.pathMap = this.pathBuilder.makePath(true);
-    this.createBuildings(objectsMap, areaSize, offset);
-    this.createShadows(shadowMap, objectsMap, areaSize, offset)
     this.createArtifacts(artifactMap, areaSize, offset, busyAreas, 10, 5);
+    let trainPoint = this.createTrainStation(offset);
+    objectsMap[`${trainPoint.x}_${trainPoint.y}`] = trainPoint;
+    this.createShadows(shadowMap, trainPoint);
     this.createBuildingArtifacts(artifactMap, this.pathWidth, this.tileSize, offset)
     this.streetMap = this.createStreets();
   }
 
-  
   createBuildingArtifacts = (artifactMap, pathWidth, tileSize, offset) => {
     this.artifactMap = artifactMap;
     for (let x = this.pathWidth; x < this.pathWidth + this.tileSize; x++) {
@@ -129,55 +133,47 @@ class BuildingsTile extends Tile {
     return artifactMap;
   }
 
-  createBuildings = (objectsMap, areaSize, offset) => {
-    let buildingsMap = objectsMap;
-    let buildingTypes = [... this.season.buildings]
-    for (let t = 0; t < 2; t++) {
-      let buildingIndex = randomInt(buildingTypes.length);
-      let building = buildingTypes[buildingIndex].data;
-      buildingTypes.splice(buildingIndex, 1);
-      let tx = t * building.width + areaSize.x + offset.x - 1 - (1*t);
-      let ty =  areaSize.y + offset.y - 14 + randomInt(16);
-      let buildingPoint = {
-        type: 'building',
-        x: tx,
-        y: ty,
-        data: {
-          ...building
-        }
-      }
-      buildingsMap[`${buildingPoint.x}_${buildingPoint.y}`] = buildingPoint
-      this.objectKeys.push([`${buildingPoint.x}_${buildingPoint.y}`])
+  createShadows = (shadowMap, s) => {
+    let boundingBox = {
+      x: s.x - 2 + this.pathWidth,
+      w: 40,
+      y: s.y + 6 + this.pathWidth,
+      h: 25
     }
-
-    return buildingsMap;
-  }
-
-  createShadows = (shadowMap, objectMap) => {
-    let buildingsMap = objectMap;
-    this.objectKeys.forEach(k => {
-      let t = buildingsMap[k];
-      let boundingBox = {
-        x: t.x,
-        w: 23,
-        y: t.y + 28,
-        h: 16
+    if (s.data.direction.enter == 'u') {
+      boundingBox = {
+        x: s.x - 2 + this.pathWidth,
+        w: 40,
+        y: s.y + 14 + this.pathWidth,
+        h: 25
       }
-
-      for (let sy = boundingBox.y; sy < boundingBox.y + boundingBox.h; sy++) {
-        for (let sx = boundingBox.x; sx < boundingBox.x + boundingBox.w; sx++) {
-          if ((sx == boundingBox.x || sx == boundingBox.x + boundingBox.w - 1) && (sy == boundingBox.y || sy == boundingBox.y + boundingBox.h - 1)) continue;
-          shadowMap[`${sx}_${sy}`] = {
-            type: 'shadow',
-            x: sx,
-            y: sy,
-            data: {
-              parent: k
-            }
-          }
-        }
+    }
+    for (let sy = boundingBox.y; sy < boundingBox.y + boundingBox.h; sy++) {
+      let ssy = Math.round(sy + this.pathWidth/2);
+      if (!shadowMap[ssy]) shadowMap[ssy] = {}
+      for (let sx = boundingBox.x; sx < boundingBox.x + boundingBox.w; sx++) {
+        if ((sx == boundingBox.x || sx == boundingBox.x + boundingBox.w - 1) && (sy == boundingBox.y || sy == boundingBox.y + boundingBox.h - 1)) continue;
+        let ssx = Math.round(sx + this.pathWidth/2)
+        shadowMap[ssy][ssx] = true
       }
-    })
+    }
+  
     return shadowMap
   }
+  
+  createTrainStation = (offset) => {
+    let direction = this.direction;
+    let trainData = (new Station(direction)).data
+    let trainPoint = {
+      type: 'station',
+      x: offset.x,
+      y: offset.y,
+      data: {
+        ...trainData
+      }
+    }
+    return trainPoint
+  }
 }
+
+export { StationTile }

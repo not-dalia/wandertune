@@ -1,5 +1,6 @@
 class TownBuilder {
-  constructor(tileSize, pathWidth, pixelSize, availableTileCounts) {
+  constructor(tileFactory, tileSize, pathWidth, pixelSize, availableTileCounts) {
+    this.tileFactory = tileFactory
     this.tileSize = tileSize/pixelSize;
     this.pathWidth = pathWidth/pixelSize;
     this.pixelSize = pixelSize;
@@ -43,6 +44,14 @@ class TownBuilder {
     }
   }
 
+  randomTile(probabilityCutoff) {
+    let probability = randomInt(100)
+    if (probability > probabilityCutoff)
+      return this.tileFactory.make('buildings');
+    else 
+      return this.tileFactory.make('forest');
+  }
+
   registerElementsFromMap(elementMap) {
     this.elementMap = elementMap;
     elementMap.forEach((e, i) => {
@@ -84,6 +93,19 @@ class TownBuilder {
     })
   }
 
+  getRiverStart(direction) {
+    let type = ['bend', 'straight'][randomInt(2)];
+    return this.tileFactory.make('river', direction, type);
+  }
+
+  getRiverLake(direction) {
+    return this.tileFactory.make('river', direction, 'lake');
+  }
+
+  getTrainStart(direction) {
+    return this.tileFactory.make('station', direction);
+  }
+
   createRiverPath() {
     let availableTileCounts = this.availableTileCounts;
     let side = ['x', 'y'][randomInt(2)]
@@ -102,7 +124,7 @@ class TownBuilder {
     if (elementData.tile) {
       return
     }
-    elementData.tile = riverStart(direction)
+    elementData.tile = this.getRiverStart(direction)
     this._riverTiles.push(elementId);
     let canRiverFlow = true;
     while (canRiverFlow) {
@@ -127,10 +149,10 @@ class TownBuilder {
       let newElementId = `${coordinates.x}_${coordinates.y}`
 
       if (this._tiles[newElementId].tile) {
-        this._tiles[elementId].tile = riverLake(riverData.direction.enter, 'lake')
+        this._tiles[elementId].tile = this.getRiverLake(riverData.direction.enter, 'lake')
       } else {
         elementId = newElementId;
-        this._tiles[elementId].tile = riverStart(direction)
+        this._tiles[elementId].tile = this.getRiverStart(direction)
         this._riverTiles.push(elementId);
       }
     }
@@ -160,7 +182,7 @@ class TownBuilder {
       else if (coordinates.y == 0) direction = 'u'
       else direction = 'd'
 
-      elementData.tile = trainStart(tileSize, direction)
+      elementData.tile = this.getTrainStart(direction)
       break;
     } while (c >= 0)
   }
@@ -183,8 +205,8 @@ class TownBuilder {
       if (tile.tile) return
       let tileCoords = this.parseIndexToCoords(k);
       let distance = Math.pow((Math.pow(townArea.x - tileCoords.x , 2) + Math.pow(townArea.y - tileCoords.y, 2)), 0.5)
-      if (distance <= radius) tile.tile = randomTile(distance / radius * 100)
-      else tile.tile = randomTile(95)
+      if (distance <= radius) tile.tile = this.randomTile(distance / radius * 100)
+      else tile.tile = this.randomTile(95)
     })
   }
 
@@ -243,13 +265,22 @@ class TownBuilder {
         x: hasStreets.l ? this.pathWidth + 3 : 3,
         y: hasStreets.u ? this.pathWidth + 3 : 3
       }
-      // console.log(neighbors)
-      // console.log(hasStreets)
-      // console.log(areaSize)
       tile.tile.createTile({objectsMap: this.objectsMap, shadowMap: this.shadowMap, artifactMap: this.artifactMap, busyAreas: this.busyAreas, hasStreets}, areaSize, {x: elementMap[tile.elementIndex].locX / this.pixelSize, y: elementMap[tile.elementIndex].locY / this.pixelSize})
       
 
       elementMap[tile.elementIndex].tileData = tile.tile.data;
     })
   }
+
+  buildTown() {
+    let riverLength = this.createRiverPath();
+    if (riverLength < (this.availableTileCounts.x * this.availableTileCounts.y) * 0.2) this.createRiverPath();
+  
+    this.createTrainStationTile();
+    this.createTownCentre();
+    this.generateStreets();
+    this.generateAllTilesData(this.elementMap);
+  }
 }
+
+export { TownBuilder }
