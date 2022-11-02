@@ -114,23 +114,24 @@ let playDirection = 1;
 function moveListenerOnPath () {
   if (!audioPlaying) return;
   if (playIndex < 0 || playIndex >= sampledPoints.length) {
-    // playDirection = playDirection * -1;
-    // playIndex += playDirection
-    clearInterval(listenerTimer)
+    playDirection = playDirection * -1;
+    playIndex += playDirection
+    // clearInterval(listenerTimer)
     return
   }
   let point = sampledPoints[playIndex]
   playIndex += playDirection;
   listener.positionX.value = point.point[0]
   listener.positionY.value = point.point[1]
-  if (point.direction) {
-    listener.forwardX.value = playDirection * point.direction[0]
-    listener.forwardY.value = playDirection * point.direction[1]
+  let pointDirection = (point.direction || point.selfDirection)
+  if (pointDirection) {
+    listener.forwardX.value = playDirection * pointDirection[0]
+    listener.forwardY.value = playDirection * pointDirection[1]
   }
   updatePannerPositions()
   animationFrame = requestAnimationFrame(animateCircle);
-  infoMapBuilder.drawLine([point.point, [-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]]], { lineWidth: 1, strokeColor: 'black'}, {})
-  infoMapBuilder.drawPoint([-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]], { radius: 2, color: 'black'})
+  infoMapBuilder.drawLine([point.point, [-playDirection * pointDirection[0] + point.point[0], -playDirection * pointDirection[1] + point.point[1]]], { lineWidth: 1, strokeColor: 'black'}, {})
+  infoMapBuilder.drawPoint([-playDirection * pointDirection[0] + point.point[0], -playDirection * pointDirection[1] + point.point[1]], { radius: 2, color: 'black'})
 }
 
 function nearestPointOnGeoLine(geoLine, geoPoint) {
@@ -360,11 +361,16 @@ function samplePathLine() {
     }
   }
   let turningSamples = Math.round(turningDuration / updateRate);
+  let halfSamples = Math.round(turningSamples / 2)
   // let turningSamples = 5;
   console.log('turningSamples: ' + turningSamples)
   sampledPoints.forEach((p, i) => {
+  
     let lookingAtPoint = sampledPoints[Math.min(i + turningSamples, sampledPoints.length - 1)]
-    p.direction = [p.point[0] - lookingAtPoint.point[0], p.point[1] - lookingAtPoint.point[1]]
+    let directionPointIndex = (i + halfSamples >= sampledPoints.length) ? i : i + halfSamples
+    let directionPoint = sampledPoints[directionPointIndex]
+    p.selfDirection = [p.point[0] - lookingAtPoint.point[0], p.point[1] - lookingAtPoint.point[1]]
+    directionPoint.direction = [p.point[0] - lookingAtPoint.point[0], p.point[1] - lookingAtPoint.point[1]]
     // mapBuilder.drawPoint(p.point, {color: "blue", radius: 1})
   })
 
