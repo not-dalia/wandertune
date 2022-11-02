@@ -1,13 +1,16 @@
 import { MapBuilder } from "./audio-layer/map-builder.js";
+import { MapCanvas } from "./audio-layer/map-canvas.js";
 
-const mapBuilder = new MapBuilder();
-
+const infoMapBuilder = new MapBuilder();
+let pathCanvas;
+let pathColor = '#3f51b5';
 let pannerContainer;
 
 let stepSize = 4 / zoomFactor;
+const desiredUpdateRate = 200
 let updateRate = 200;
 let distanceRadius = 20 * pixelsPerMeter;
-let turningDuration = 6000 / zoomFactor;
+let turningDuration = 6000;
 
 
 let AudioContext;
@@ -16,6 +19,8 @@ let listener;
 const posX = 0;
 const posY = 0;
 
+let isInfoLayerVisible = false;
+
 const pannerModel = 'HRTF';
 const distanceModel = 'exponential';
 
@@ -23,7 +28,7 @@ const refDistance = 80 / zoomFactor;
 const maxDistance = 3;
 
 
-const rollOff = 3 * zoomFactor;
+const rollOff = 3 * (Math.max(1, zoomFactor / 4));
 
 const orientationX = 0.0;
 const orientationY = 0.0;
@@ -47,8 +52,10 @@ function initAudioContext() {
   // dynamicCompressor.connect(audioCtx.destination)
 }
 
-function assignPanners () {
+function assignPanners (indexes) {
+  console.log(indexes)
   elementMap.forEach((e, i) => {
+    if (!indexes.includes(i)) return
     if (e.tileData.type == 'forest') createElementPanner(e, 'audio/forest.ogg', i)
     if (e.tileData.type == 'building') createElementPanner(e, 'audio/cafe.ogg', i)
     if (e.tileData.type == 'river') createElementPanner(e, 'audio/river2.ogg', i)
@@ -82,10 +89,7 @@ function createElementPanner (element, audio, index) {
   const audioElement = new Audio(audio);
   const track = audioCtx.createMediaElementSource(audioElement);
   // track.connect(panner).connect(dynamicCompressor)
-  audioElement.addEventListener('ended', function() {
-    this.currentTime = 0;
-    this.play();
-  }, false)
+  audioElement.loop = true;
   pannersDict[index] = {track, panner, pannerElement}
 
   audioArr.push(audioElement)
@@ -99,41 +103,10 @@ function animateCircle (timestamp) {
   if (!l) return;
   l.style.top = `${listener.positionY.value}px`
   l.style.left = `${listener.positionX.value}px`
-}
-
-function moveCircle () {
-  if (!keyPressed) return;
-  switch(keyPressed) {
-    case "Down": // IE/Edge specific value
-    case "ArrowDown":
-      listener.positionY.value+=stepSize;
-      listener.forwardX.value = 0;
-      listener.forwardY.value = -1;
-      break
-    case "Up": // IE/Edge specific value
-    case "ArrowUp":
-      listener.positionY.value-=stepSize;
-      listener.forwardX.value = 0;
-      listener.forwardY.value = 1;
-      break;
-    case "Left": // IE/Edge specific value
-    case "ArrowLeft":
-      listener.positionX.value-=stepSize;
-      listener.forwardY.value = 0;
-      listener.forwardX.value = 1;
-      break;
-    case "Right": // IE/Edge specific value
-    case "ArrowRight":
-      listener.positionX.value+=stepSize;
-      listener.forwardY.value = 0;
-      listener.forwardX.value = -1;
-      break;
-    default:
-      keyPressed = null;
-      break;
-  }
-  updatePannerPositions()
-  animationFrame = requestAnimationFrame(animateCircle);
+  let lp = document.querySelector('.location-pointer');
+  if (!lp) return;
+  lp.style.top = `${listener.positionY.value}px`
+  lp.style.left = `${listener.positionX.value}px`
 }
 
 let playIndex = 0;
@@ -156,12 +129,8 @@ function moveListenerOnPath () {
   }
   updatePannerPositions()
   animationFrame = requestAnimationFrame(animateCircle);
-  // mapBuilder.mapCanvas.ctx.clearRect(0, 0, mapBuilder.mapCanvas.canvas.clientWidth, mapBuilder.mapCanvas.canvas.clientHeight)
-  // for (let i = 1; i < mousePathArr.length; i++) {
-  //   mapBuilder.mapCanvas.drawLine([mousePathArr[i-1], mousePathArr[i]], {strokeColor: 'orange'}, {})
-  // }
-  mapBuilder.mapCanvas.drawLine([point.point, [-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]]], { lineWidth: 1, strokeColor: 'black'}, {})
-  mapBuilder.mapCanvas.drawPoint([-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]], { radius: 2, color: 'black'})
+  infoMapBuilder.drawLine([point.point, [-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]]], { lineWidth: 1, strokeColor: 'black'}, {})
+  infoMapBuilder.drawPoint([-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]], { radius: 2, color: 'black'})
 }
 
 function nearestPointOnGeoLine(geoLine, geoPoint) {
@@ -206,14 +175,14 @@ function pointDistance(point1, point2) {
 }
 
 function updatePannerPositions () {
-  let selectedPanners = document.querySelectorAll('.panner.moved') 
-  let pannersToMove = mapBuilder.tree.search({
+  let pannersToMove = infoMapBuilder.tree.search({
     minX: listener.positionX.value - distanceRadius / zoomFactor,
     maxX: listener.positionX.value + distanceRadius / zoomFactor,
     minY: listener.positionY.value - distanceRadius / zoomFactor,
     maxY: listener.positionY.value + distanceRadius / zoomFactor,
   })
   let indexes = pannersToMove.map((p) => p.index)
+  let selectedPanners = document.querySelectorAll('.panner.moved') 
   selectedPanners.forEach(p => {
     if (indexes.includes(p.dataset.index)) return;
     p.classList.remove('moved')
@@ -240,43 +209,75 @@ function updatePannerPositions () {
       if (!pannersDict[p.index] || !pannersDict[p.index].panner) return;
       pannersDict[p.index].panner.positionX.value = listener.positionX.value
       pannersDict[p.index].panner.positionY.value = listener.positionY.value
-      pannersDict[p.index].pannerElement.style.left = `${listener.positionX.value}px`
-      pannersDict[p.index].pannerElement.style.top = `${listener.positionY.value}px`
+      if (isInfoLayerVisible) {
+        pannersDict[p.index].pannerElement.style.left = `${listener.positionX.value}px`
+        pannersDict[p.index].pannerElement.style.top = `${listener.positionY.value}px`
+      }
       pannersDict[p.index].pannerElement.classList.add('moved')
     } else {
       let nearestPoint = nearestPointOnGeoLine(p.lineString, currentPoint)
       if (!pannersDict[p.index] || !pannersDict[p.index].panner) return;
       pannersDict[p.index].panner.positionX.value = nearestPoint.geometry.coordinates[0]
       pannersDict[p.index].panner.positionY.value = nearestPoint.geometry.coordinates[1]
-      pannersDict[p.index].pannerElement.style.left = `${nearestPoint.geometry.coordinates[0]}px`
-      pannersDict[p.index].pannerElement.style.top = `${nearestPoint.geometry.coordinates[1]}px`
-      pannersDict[p.index].pannerElement.classList.add('moved')
+      if (isInfoLayerVisible) {
+        pannersDict[p.index].pannerElement.style.left = `${nearestPoint.geometry.coordinates[0]}px`
+        pannersDict[p.index].pannerElement.style.top = `${nearestPoint.geometry.coordinates[1]}px`
+      }
+        pannersDict[p.index].pannerElement.classList.add('moved')
     }
   })
 }
 
 function setStepSizeFromPace (pace) {
-  stepSize = Math.round((pace * 1000 * pixelsPerMeter) / (60 * 60 / (updateRate / 1000))) / zoomFactor;
+  updateRate = desiredUpdateRate
+  let paceInMeterPerSecond = pace * 1000 / (60 * 60)
+  let paceInPixelPerMillisecond = paceInMeterPerSecond * pixelsPerMeter / (zoomFactor * 1000)
+  stepSize = Math.max(1, Math.round(paceInPixelPerMillisecond * updateRate))
+  console.log('pace: ' + pace)
+  console.log('pixelsPerMeter: ' + pixelsPerMeter)
+  console.log('paceInMeterPerSecond: ' + paceInMeterPerSecond)
+  console.log('paceInPixelPerMillisecond: ' + paceInPixelPerMillisecond)
+  console.log('stepSize: ' + stepSize)
+  let correctStepSize = (pace * 1000 * pixelsPerMeter) / (60 * 60 / (updateRate / 1000)) / zoomFactor;
+  console.log('correctStepSize: ' + correctStepSize)
+
+
+  updateRate = stepSize / paceInPixelPerMillisecond
+  console.log('updateRate: ' + updateRate)
 }
 
 let canDrawPath = false;
 let elementMap;
 function initMap(currentElementMap, townWidth, townHeight, walkingPace = 4) {
   elementMap = currentElementMap
+
   pannerContainer = document.querySelector('.panner-container');
   pannerContainer.style.width = `${townWidth / zoomFactor}px`
   pannerContainer.style.height = `${townHeight / zoomFactor}px`
   pannerContainer.innerHTML = '';
+
+  let pathContainer = document.querySelector('.path-container');
+  pathContainer.style.width = `${townWidth / zoomFactor}px`
+  pathContainer.style.height = `${townHeight / zoomFactor}px`
+  pathContainer.innerHTML = '';
   pannersDict = {};
   audioArr = [];
+
   let l = document.querySelector('.listener') || document.createElement('div');
   l.classList.add('listener')
   l.style.outlineOffset = `${distanceRadius / zoomFactor}px`
   pannerContainer.append(l);
+
+  let lp = document.querySelector('.location-pointer') || document.createElement('div');
+  lp.classList.add('location-pointer')
+  pathContainer.append(lp);
+
   window.cancelAnimationFrame(animationFrame);
   clearInterval(listenerTimer);
   setStepSizeFromPace(walkingPace)
-  mapBuilder.buildMap(elementMap)
+  infoMapBuilder.setMapData(elementMap)
+  infoMapBuilder.buildMap()
+  pathCanvas = new MapCanvas('.path-container')
   canDrawPath = true
 }
 
@@ -311,16 +312,16 @@ window.addEventListener('mouseup', (e) => {
   updatePannerPositions() */
   if (!canDrawPath) return
   mousePathArr.push([e.clientX, e.clientY])
-  mapBuilder.mapCanvas.drawPoint([e.clientX, e.clientY], {color: 'orange', radius: 5 })
+  pathCanvas.drawPoint([e.clientX, e.clientY], {color: pathColor, radius: 15 })
   if (mousePathArr.length > 1) {
-    mapBuilder.mapCanvas.drawLine([mousePathArr[mousePathArr.length - 2], mousePathArr[mousePathArr.length - 1]], {strokeColor: 'orange', lineWidth: 6}, {})
+    pathCanvas.drawLine([mousePathArr[mousePathArr.length - 2], mousePathArr[mousePathArr.length - 1]], {strokeColor: pathColor, lineWidth: 6, dashLine: true}, {})
   }
 })
 
 
 function samplePathLine() {
-  initAudioContext()
-  assignPanners()
+  playIndex = 0;
+  let pannersOnPath = []
 
   let pathArr = [...mousePathArr]
   if (stepSize < 0 || pathArr.length == 0) return
@@ -330,6 +331,8 @@ function samplePathLine() {
   }
   let isPathOver = false
   sampledPoints = [{ point: pathArr[0], direction: pathArr[1] ? [pathArr[1][0] - pathArr[0][0], pathArr[1][1] - pathArr[0][1]] : null}]
+  pannersOnPath.push(...getPannersOnPath(sampledPoints[0]))
+
   let lineIndex = 1;
   let prevPoint = pathArr[0];
   let remainingDistance = stepSize;
@@ -344,6 +347,7 @@ function samplePathLine() {
       lineIndex += 1
       if (lineIndex >= pathArr.length) {
         sampledPoints.push({ point: line[1] })
+        pannersOnPath.push(...getPannersOnPath(line[1]))
         isPathOver = true
       }
       prevPoint = pathArr[lineIndex - 1]
@@ -352,15 +356,31 @@ function samplePathLine() {
       sampledPoints.push({ point: samplePoint })
       remainingDistance = stepSize
       prevPoint = samplePoint
+      pannersOnPath.push(...getPannersOnPath(samplePoint))
     }
   }
-  let turningSamples = turningDuration / updateRate;
+  let turningSamples = Math.round(turningDuration / updateRate);
   // let turningSamples = 5;
+  console.log('turningSamples: ' + turningSamples)
   sampledPoints.forEach((p, i) => {
     let lookingAtPoint = sampledPoints[Math.min(i + turningSamples, sampledPoints.length - 1)]
     p.direction = [p.point[0] - lookingAtPoint.point[0], p.point[1] - lookingAtPoint.point[1]]
-    mapBuilder.mapCanvas.drawPoint(p.point, {color: "blue", radius: 1})
+    // mapBuilder.drawPoint(p.point, {color: "blue", radius: 1})
   })
+
+  initAudioContext()
+  assignPanners(pannersOnPath)
+}
+
+function getPannersOnPath (point) {
+  let pannersToMove = infoMapBuilder.tree.search({
+    minX: point[0] - distanceRadius / zoomFactor,
+    maxX: point[0] + distanceRadius / zoomFactor,
+    minY: point[1] - distanceRadius / zoomFactor,
+    maxY: point[1] + distanceRadius / zoomFactor,
+  })
+  let indexes = pannersToMove.map((p) => p.index)
+  return indexes
 }
 
 function findPointOnLineByDistance([p1, p2], distance) {
@@ -377,28 +397,32 @@ function findPointOnLineByDistance([p1, p2], distance) {
 window.addEventListener('keydown', (e) => {
   // if (!listener) return;
   switch(e.key) {
-    // case "Down": // IE/Edge specific value
-    // case "ArrowDown":
-    // case "Up": // IE/Edge specific value
-    // case "ArrowUp":
-    // case "Left": // IE/Edge specific value
-    // case "ArrowLeft":
-    // case "Right": // IE/Edge specific value
-    // case "ArrowRight":
-    //   keyPressed = e.key;
-    //   // console.log(`key set to ${keyPressed}`)
-    //   break;
     case " ":
-      console.log('trying to pause')
       if (canDrawPath) break;
       audioPlaying = !audioPlaying
-      // toggleAudio()
       break;
     case "p":
-      console.log('trying to pause')
       if (canDrawPath) break;
       audioPlaying = !audioPlaying
       toggleAudio()
+      break;
+    case "i":
+      isInfoLayerVisible = !isInfoLayerVisible
+      infoMapBuilder.setIsVisible(isInfoLayerVisible)
+      console.log(isInfoLayerVisible ? "showing map" : "hiding map")
+      break;
+    case "ArrowLeft":
+      if (canDrawPath) break;
+      playIndex = Math.max(playIndex - stepSize * 10, 0)
+      clearInterval(listenerTimer)
+      listenerTimer = setInterval(moveListenerOnPath, updateRate)
+      console.log(playIndex)
+      break;
+    case "ArrowRight":
+      if (canDrawPath) break;
+      playIndex = Math.min(playIndex + stepSize * 10, sampledPoints.length - 1)
+      clearInterval(listenerTimer)
+      listenerTimer = setInterval(moveListenerOnPath, updateRate)
       break;
     case "Enter":
       if (!canDrawPath || audioPlaying) break;

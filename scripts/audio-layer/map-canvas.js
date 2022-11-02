@@ -74,8 +74,13 @@ class MapCanvas {
       coordinates = line.geometry.coordinates
       properties = { ...properties, ...line.geometry.properties }
     }
+
+    if (properties.dashLine && !Array.isArray(properties.dashLine)) {
+      properties.dashLine = [20, 5]
+    }
     
     if (isNew) this.ctx.beginPath()
+    this.ctx.setLineDash(properties.dashLine || []);
     this.ctx.moveTo(coordinates[0][0], coordinates[0][1]);
     for (let i = 1; i < coordinates.length; i++) {
       this.ctx.lineTo(coordinates[i][0], coordinates[i][1]);

@@ -8,6 +8,7 @@ class MapBuilder {
     }
     this.tree = new rbush();
     this.built = false;
+    this.isVisible = false;
   }
 
   addFeatureToMap (geometry, properties) {
@@ -34,10 +35,44 @@ class MapBuilder {
     this.addFeatureToMap(geometry, properties)
   }
 
-  buildMap (mapData) {
+  setMapData(mapData) {
+    this.mapData = mapData
+  }
+
+  setIsVisible(isVisible = false) {
+    this.isVisible = !!isVisible
+    let mapElement = document.querySelector('.panner-container')
+    if (this.isVisible) {
+      !this.built && buildMap()
+      mapElement.classList.remove("hidden")
+    }
+    else if (!this.isVisible) {
+      if (mapElement) {
+        mapElement.classList.add("hidden")
+      }
+    }
+  }
+
+  drawLine(line, inputProperties = {}, lineProps = {}) {
+    if (this.isVisible) {
+      this.mapCanvas.drawLine(line, inputProperties, lineProps)
+    }
+  }
+
+  drawPoint(point, inputProperties = {}) {
+    if (this.isVisible) {
+      this.mapCanvas.drawPoint(point, inputProperties)
+    }
+  }
+
+  buildMap () {
+    if (!this.mapData) return;
     if (this.built) return this.map;
     this.mapCanvas = new MapCanvas('.panner-container');
-    mapData.forEach((e, i) => {
+    let mapElement = document.querySelector('.panner-container')
+    mapElement.classList.add("hidden")
+    
+    this.mapData.forEach((e, i) => {
       if (e.type != 'tile') return
       const x1 = (e.locX + pathWidth) / zoomFactor;
       const x2 = (e.locX + e.w - pathWidth) / zoomFactor;
@@ -77,7 +112,7 @@ class MapBuilder {
         item.lineString = turf.lineString(resultPoly.geometry.coordinates[0])
         item.index = i
         this.tree.insert(item);
-        this.mapCanvas.drawPolygon(resultPoly)
+        this.mapCanvas.drawPolygon(resultPoly, { lineWidth: 2 })
       } else {
         const item = {
           minX: (e.locX + pathWidth) / zoomFactor,
@@ -88,10 +123,11 @@ class MapBuilder {
           lineString: turf.lineString(coordinates)
         };
         this.tree.insert(item);
-        this.mapCanvas.drawPolygon([[[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]]])
+        this.mapCanvas.drawPolygon([[[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]]], { lineWidth: 2 })
       }
     });
     this.built = true;
+    this.setIsVisible(this.isVisible)
     return this.map
   }
 }

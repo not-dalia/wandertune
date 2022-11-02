@@ -90,20 +90,35 @@ body {
   background: #f00 !important;
 }
 
-.panner-container {
+.panner-container, .path-container  {
   position: absolute;
   top: 0;
   left: 0;
 }
 
+.location-pointer {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  background: url('../icons/location.svg');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  transform: translateX(-50%) translateY(-100%);
+  z-index: 45;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .listener {
   position: absolute;
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
   /* border-radius: 30px; */
   /* background: red; */
   transform: translateX(-50%) translateY(-50%);
-  outline: 6px solid red;
+  outline: 2px solid red;
   z-index: 40;
   display: flex;
   justify-content: center;
@@ -111,8 +126,8 @@ body {
 }
 
 .listener:after {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   border-radius: 30px;
   background: red;
   content: ' ';
@@ -120,9 +135,9 @@ body {
 
 .panner {
   position: absolute;
-  width: 40px;
-  height: 40px;
-  border-radius: 40px;
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
   background: purple;
   transform: translateX(-50%) translateY(-50%);
   display: flex;
@@ -133,7 +148,7 @@ body {
 
 .panner:after {
   content: attr(data-panner);
-  font-size: 1.5rem;
+  font-size: 1rem;
   color: yellow;
   display: block;
   text-align: center;
@@ -153,4 +168,8 @@ body {
 
 .moved:after {
   color: blue !important;
+}
+
+.hidden {
+  display: none !important;
 }
