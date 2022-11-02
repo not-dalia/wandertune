@@ -94,8 +94,6 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
 }
 
 .listener {
@@ -122,9 +120,9 @@ body {
 
 .panner {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  border-radius: 30px;
+  width: 40px;
+  height: 40px;
+  border-radius: 40px;
   background: purple;
   transform: translateX(-50%) translateY(-50%);
   display: flex;
@@ -135,7 +133,7 @@ body {
 
 .panner:after {
   content: attr(data-panner);
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: yellow;
   display: block;
   text-align: center;

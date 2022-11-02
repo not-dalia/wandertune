@@ -4,9 +4,10 @@ const mapBuilder = new MapBuilder();
 
 let pannerContainer;
 
-let stepSize = 4;
+let stepSize = 4 / zoomFactor;
 let updateRate = 200;
 let distanceRadius = 20 * pixelsPerMeter;
+let turningDuration = 6000 / zoomFactor;
 
 
 let AudioContext;
@@ -18,11 +19,11 @@ const posY = 0;
 const pannerModel = 'HRTF';
 const distanceModel = 'exponential';
 
-const refDistance = 80;
+const refDistance = 80 / zoomFactor;
 const maxDistance = 3;
 
 
-const rollOff = 3;
+const rollOff = 3 * zoomFactor;
 
 const orientationX = 0.0;
 const orientationY = 0.0;
@@ -46,15 +47,6 @@ function initAudioContext() {
   // dynamicCompressor.connect(audioCtx.destination)
 }
 
-function setListenerPosition (posX, posY) {
-  listener.positionX.value = posX;
-	listener.positionY.value = posY;
-}
-function setListenerForward (forwardX, forwardY) {
-  listener.forwardX.value = forwardX;
-	listener.forwardY.value = forwardY;
-}
-
 function assignPanners () {
   elementMap.forEach((e, i) => {
     if (e.tileData.type == 'forest') createElementPanner(e, 'audio/forest.ogg', i)
@@ -67,8 +59,8 @@ function createElementPanner (element, audio, index) {
   const panner = new PannerNode(audioCtx, {
     panningModel: pannerModel,
     distanceModel: distanceModel,
-    positionX: element.locX + pathWidth + tileSize/2,
-    positionY: element.locY + pathWidth + tileSize/2,
+    positionX: (element.locX + pathWidth + tileSize/2) / zoomFactor,
+    positionY: (element.locY + pathWidth + tileSize/2) / zoomFactor,
     positionZ: 0,
     // orientationX: orientationX,
     // orientationY: orientationY,
@@ -147,6 +139,7 @@ function moveCircle () {
 let playIndex = 0;
 let playDirection = 1;
 function moveListenerOnPath () {
+  if (!audioPlaying) return;
   if (playIndex < 0 || playIndex >= sampledPoints.length) {
     // playDirection = playDirection * -1;
     // playIndex += playDirection
@@ -167,8 +160,8 @@ function moveListenerOnPath () {
   // for (let i = 1; i < mousePathArr.length; i++) {
   //   mapBuilder.mapCanvas.drawLine([mousePathArr[i-1], mousePathArr[i]], {strokeColor: 'orange'}, {})
   // }
-  mapBuilder.mapCanvas.drawLine([point.point, [-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]]], { lineWidth: 2, strokeColor: 'black'}, {})
-  mapBuilder.mapCanvas.drawPoint([-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]], { radius: 5, color: 'black'})
+  mapBuilder.mapCanvas.drawLine([point.point, [-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]]], { lineWidth: 1, strokeColor: 'black'}, {})
+  mapBuilder.mapCanvas.drawPoint([-playDirection * point.direction[0] + point.point[0], -playDirection * point.direction[1] + point.point[1]], { radius: 2, color: 'black'})
 }
 
 function nearestPointOnGeoLine(geoLine, geoPoint) {
@@ -215,10 +208,10 @@ function pointDistance(point1, point2) {
 function updatePannerPositions () {
   let selectedPanners = document.querySelectorAll('.panner.moved') 
   let pannersToMove = mapBuilder.tree.search({
-    minX: listener.positionX.value - distanceRadius,
-    maxX: listener.positionX.value + distanceRadius,
-    minY: listener.positionY.value - distanceRadius,
-    maxY: listener.positionY.value + distanceRadius,
+    minX: listener.positionX.value - distanceRadius / zoomFactor,
+    maxX: listener.positionX.value + distanceRadius / zoomFactor,
+    minY: listener.positionY.value - distanceRadius / zoomFactor,
+    maxY: listener.positionY.value + distanceRadius / zoomFactor,
   })
   let indexes = pannersToMove.map((p) => p.index)
   selectedPanners.forEach(p => {
@@ -263,30 +256,33 @@ function updatePannerPositions () {
 }
 
 function setStepSizeFromPace (pace) {
-  stepSize = Math.round((pace * 1000 * pixelsPerMeter) / (60 * 60 / (updateRate / 1000)));
+  stepSize = Math.round((pace * 1000 * pixelsPerMeter) / (60 * 60 / (updateRate / 1000))) / zoomFactor;
 }
 
 let canDrawPath = false;
-
-function initMap(walkingPace = 4) {
+let elementMap;
+function initMap(currentElementMap, townWidth, townHeight, walkingPace = 4) {
+  elementMap = currentElementMap
   pannerContainer = document.querySelector('.panner-container');
+  pannerContainer.style.width = `${townWidth / zoomFactor}px`
+  pannerContainer.style.height = `${townHeight / zoomFactor}px`
   pannerContainer.innerHTML = '';
   pannersDict = {};
   audioArr = [];
   let l = document.querySelector('.listener') || document.createElement('div');
   l.classList.add('listener')
-  l.style.outlineOffset = `${distanceRadius}px`
+  l.style.outlineOffset = `${distanceRadius / zoomFactor}px`
   pannerContainer.append(l);
   window.cancelAnimationFrame(animationFrame);
   clearInterval(listenerTimer);
-  initAudioContext()
-  assignPanners()
   setStepSizeFromPace(walkingPace)
   mapBuilder.buildMap(elementMap)
   canDrawPath = true
 }
 
+let audioPlaying = false;
 function playAudio () {
+  audioPlaying = true;
   canDrawPath = false
   audioArr.forEach(a => a.play())
   playIndex = 0;
@@ -296,6 +292,14 @@ function playAudio () {
   listenerTimer = setInterval(moveListenerOnPath, updateRate)
   animateCircle()
   updatePannerPositions()
+}
+
+function toggleAudio() {
+  if (audioPlaying) {
+    audioArr.forEach(a => a.play())
+  } else {
+    audioArr.forEach(a => a.pause())
+  }
 }
 
 let mousePathArr = []
@@ -309,12 +313,15 @@ window.addEventListener('mouseup', (e) => {
   mousePathArr.push([e.clientX, e.clientY])
   mapBuilder.mapCanvas.drawPoint([e.clientX, e.clientY], {color: 'orange', radius: 5 })
   if (mousePathArr.length > 1) {
-    mapBuilder.mapCanvas.drawLine([mousePathArr[mousePathArr.length - 2], mousePathArr[mousePathArr.length - 1]], {strokeColor: 'orange'}, {})
+    mapBuilder.mapCanvas.drawLine([mousePathArr[mousePathArr.length - 2], mousePathArr[mousePathArr.length - 1]], {strokeColor: 'orange', lineWidth: 6}, {})
   }
 })
 
 
 function samplePathLine() {
+  initAudioContext()
+  assignPanners()
+
   let pathArr = [...mousePathArr]
   if (stepSize < 0 || pathArr.length == 0) return
   canDrawPath = false
@@ -347,12 +354,12 @@ function samplePathLine() {
       prevPoint = samplePoint
     }
   }
-  let turningDuration = 4000;
   let turningSamples = turningDuration / updateRate;
+  // let turningSamples = 5;
   sampledPoints.forEach((p, i) => {
     let lookingAtPoint = sampledPoints[Math.min(i + turningSamples, sampledPoints.length - 1)]
     p.direction = [p.point[0] - lookingAtPoint.point[0], p.point[1] - lookingAtPoint.point[1]]
-    mapBuilder.mapCanvas.drawPoint(p.point, {color: "blue", radius: 2})
+    mapBuilder.mapCanvas.drawPoint(p.point, {color: "blue", radius: 1})
   })
 }
 
@@ -368,19 +375,36 @@ function findPointOnLineByDistance([p1, p2], distance) {
 
 
 window.addEventListener('keydown', (e) => {
-  if (!listener) return;
+  // if (!listener) return;
   switch(e.key) {
-    case "Down": // IE/Edge specific value
-    case "ArrowDown":
-    case "Up": // IE/Edge specific value
-    case "ArrowUp":
-    case "Left": // IE/Edge specific value
-    case "ArrowLeft":
-    case "Right": // IE/Edge specific value
-    case "ArrowRight":
-      keyPressed = e.key;
-      // console.log(`key set to ${keyPressed}`)
+    // case "Down": // IE/Edge specific value
+    // case "ArrowDown":
+    // case "Up": // IE/Edge specific value
+    // case "ArrowUp":
+    // case "Left": // IE/Edge specific value
+    // case "ArrowLeft":
+    // case "Right": // IE/Edge specific value
+    // case "ArrowRight":
+    //   keyPressed = e.key;
+    //   // console.log(`key set to ${keyPressed}`)
+    //   break;
+    case " ":
+      console.log('trying to pause')
+      if (canDrawPath) break;
+      audioPlaying = !audioPlaying
+      // toggleAudio()
       break;
+    case "p":
+      console.log('trying to pause')
+      if (canDrawPath) break;
+      audioPlaying = !audioPlaying
+      toggleAudio()
+      break;
+    case "Enter":
+      if (!canDrawPath || audioPlaying) break;
+      samplePathLine()
+      playAudio()
+      break
     default:
       keyPressed = null;
       break;

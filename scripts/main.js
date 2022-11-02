@@ -1,5 +1,6 @@
 import { TileFactory, TownBuilder, Season } from "./town-generator/index.js";
 import { BuildingsTile, ForestTile, RiverTile, StationTile } from "./town-generator/tiles/index.js"
+import { initMap } from "./mapLayer.js";
 
 const tileFactory = new TileFactory();
 
@@ -225,7 +226,7 @@ function createTownCanvas(id, width, height) {
 }
 
 
-function start() {
+async function start() {
 	// Init tileFactory and register available tile types
 	tileFactory.init(currentSeason, tileSize, pathWidth, pixelSize);
 	tileFactory.registerTileType('forest', ForestTile);
@@ -256,7 +257,8 @@ function start() {
 	townBuilder.buildTown()
 
 	// draw tiles to canvas
-	drawTiles(season.color, townBuilder.objectsMap, townBuilder.shadowMap, townBuilder.artifactMap);
+	await drawTiles(season.color, townBuilder.objectsMap, townBuilder.shadowMap, townBuilder.artifactMap);
+	initMap(elementMap, townWidth, townHeight)
 }
 
 start()

@@ -39,10 +39,10 @@ class MapBuilder {
     this.mapCanvas = new MapCanvas('.panner-container');
     mapData.forEach((e, i) => {
       if (e.type != 'tile') return
-      const x1 = e.locX + pathWidth;
-      const x2 = e.locX + e.w - pathWidth;
-      const y1 = e.locY + pathWidth;
-      const y2 = e.locY + e.h - pathWidth;
+      const x1 = (e.locX + pathWidth) / zoomFactor;
+      const x2 = (e.locX + e.w - pathWidth) / zoomFactor;
+      const y1 = (e.locY + pathWidth) / zoomFactor;
+      const y2 = (e.locY + e.h - pathWidth) / zoomFactor;
       const coordinates = [
         [x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]
       ];
@@ -52,10 +52,10 @@ class MapBuilder {
         let resultPoly;
         e.tileData.boundary.forEach(b => {
           let {minX, minY, maxX, maxY} = b
-          minX = Math.max(minX * pixelSize, e.locX + pathWidth/2)
-          maxX = Math.min(maxX * pixelSize, e.locX + e.w - pathWidth/2)
-          minY = Math.max(minY * pixelSize, e.locY + pathWidth/2)
-          maxY = Math.min(maxY * pixelSize, e.locY + e.h - pathWidth/2)
+          minX = Math.max(minX * pixelSize, e.locX + pathWidth/2) / zoomFactor
+          maxX = Math.min(maxX * pixelSize, e.locX + e.w - pathWidth/2) / zoomFactor
+          minY = Math.max(minY * pixelSize, e.locY + pathWidth/2) / zoomFactor
+          maxY = Math.min(maxY * pixelSize, e.locY + e.h - pathWidth/2) / zoomFactor
           let poly = turf.polygon([[[minX, minY], [minX, maxY], [maxX, maxY], [maxX, minY], [minX, minY]]])
           if (!resultPoly) resultPoly = poly
           else resultPoly = turf.union(resultPoly, poly)
@@ -80,10 +80,10 @@ class MapBuilder {
         this.mapCanvas.drawPolygon(resultPoly)
       } else {
         const item = {
-          minX: e.locX + pathWidth,
-          minY: e.locY + pathWidth,
-          maxX: e.locX + e.w - pathWidth,
-          maxY: e.locY + e.h - pathWidth,
+          minX: (e.locX + pathWidth) / zoomFactor,
+          minY: (e.locY + pathWidth) / zoomFactor,
+          maxX: (e.locX + e.w - pathWidth) / zoomFactor,
+          maxY: (e.locY + e.h - pathWidth) / zoomFactor,
           index: i,
           lineString: turf.lineString(coordinates)
         };
