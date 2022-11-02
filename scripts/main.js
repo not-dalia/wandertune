@@ -9,8 +9,8 @@ let loadedImages = {}
 const TownUtils = {
 	getAvailableScreenSpace() {
 		return {
-			x: document.documentElement.clientWidth,
-			y: document.documentElement.clientHeight
+			x: document.documentElement.clientWidth * zoomFactor,
+			y: document.documentElement.clientHeight * zoomFactor
 		}
 	},
 	calculateAvailableTiles(availableSpace, pathWidth, tileSize) {
@@ -217,8 +217,8 @@ function createTownCanvas(id, width, height) {
 	canvas.id = id;
 	canvas.style.top = 0;
 	canvas.style.left = 0;
-	canvas.style.width = `${width}px`;
-	canvas.style.height = `${height}px`;
+	canvas.style.width = `${width / zoomFactor}px`;
+	canvas.style.height = `${height / zoomFactor}px`;
 	canvas.setAttribute('width', width)
 	canvas.setAttribute('height', height)
 	return canvas
@@ -231,7 +231,7 @@ function start() {
 	tileFactory.registerTileType('forest', ForestTile);
 	tileFactory.registerTileType('river', RiverTile);
 	tileFactory.registerTileType('station', StationTile);
-	tileFactory.registerTileType('buildings', BuildingsTile);
+	tileFactory.registerTileType('building', BuildingsTile);
 
 	// calculate available space for tiles and canvas
 	let availableSpace = TownUtils.getAvailableScreenSpace();
@@ -241,10 +241,12 @@ function start() {
 	let season = new Season(currentSeason)
 	const town = document.querySelector('.town');
 	town.innerHTML = ''
-	town.style.width = `${availableTileCounts.x * tileSize + availableTileCounts.x * pathWidth + pathWidth}px`
-	town.style.height = `${availableTileCounts.y * tileSize + availableTileCounts.y * pathWidth + pathWidth}px`
+	let townWidth = availableTileCounts.x * tileSize + availableTileCounts.x * pathWidth + pathWidth
+	let townHeight = availableTileCounts.y * tileSize + availableTileCounts.y * pathWidth + pathWidth
+	town.style.width = `${townWidth / zoomFactor}px`
+	town.style.height = `${townHeight / zoomFactor}px`
 	town.style.background = season.color
-	const townCanvas = createTownCanvas(`town-canvas`, town.style.width, town.style.height)
+	const townCanvas = createTownCanvas(`town-canvas`, townWidth, townHeight)
 	town.append(townCanvas);
 
 	// generate tile map and build the town structure

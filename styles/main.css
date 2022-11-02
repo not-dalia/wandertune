@@ -4,6 +4,11 @@ body {
   height: 100vh;
   margin: 0;
 }
+
+body {
+  display: flex;
+}
+
 .town {
   position: relative;
   /* background: #546e7a; */

@@ -44,12 +44,12 @@ class TownBuilder {
     }
   }
 
-  randomTile(probabilityCutoff) {
+  randomTile(probabilityCutoff, tileAboveProbability, tileBelowProbability) {
     let probability = randomInt(100)
     if (probability > probabilityCutoff)
-      return this.tileFactory.make('buildings');
+      return tileAboveProbability;
     else 
-      return this.tileFactory.make('forest');
+      return tileBelowProbability;
   }
 
   registerElementsFromMap(elementMap) {
@@ -189,12 +189,12 @@ class TownBuilder {
 
   createTownCentre() {
     let availableTileCounts = this.availableTileCounts;
-    // let townAreaCentreIndex = this._riverTiles[randomInt(this._riverTiles.length)];
-    // let townArea = this.parseIndexToCoords(townAreaCentreIndex);
-    let townArea = {
-      	x: randomInt(availableTileCounts.x),
-      	y: randomInt(availableTileCounts.y)
-    }
+    let townAreaCentreIndex = this._riverTiles[randomInt(this._riverTiles.length)];
+    let townArea = this.parseIndexToCoords(townAreaCentreIndex);
+    // let townArea = {
+    //   	x: this,
+    //   	y: randomInt(availableTileCounts.y)
+    // }
     let radius = Math.max(Math.max(2, Math.ceil(availableTileCounts.x * 0.3), Math.ceil(availableTileCounts.y * 0.3)), randomInt(Math.max(townArea.x, availableTileCounts.x - townArea.x, townArea.y, availableTileCounts.y - townArea.y)))
 
     console.log(`townArea: ${townArea.x},${townArea.y}`)
@@ -205,8 +205,8 @@ class TownBuilder {
       if (tile.tile) return
       let tileCoords = this.parseIndexToCoords(k);
       let distance = Math.pow((Math.pow(townArea.x - tileCoords.x , 2) + Math.pow(townArea.y - tileCoords.y, 2)), 0.5)
-      if (distance <= radius) tile.tile = this.randomTile(distance / radius * 100)
-      else tile.tile = this.randomTile(95)
+      if (distance <= radius) tile.tile = this.tileFactory.make(this.randomTile(distance / radius * 100, 'building', 'forest'))
+      else tile.tile = this.tileFactory.make(this.randomTile(98, 'building', 'forest'))
     })
   }
 

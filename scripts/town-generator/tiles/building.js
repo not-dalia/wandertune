@@ -55,7 +55,7 @@ class BuildingsTile extends Tile {
     this.tileSize = tileSize;
     this.pathWidth = pathWidth;
     this.pixelSize = pixelSize;
-    this.type = 'buildings';
+    this.type = 'building';
     this.color = '#dcdcdc';
     this.pathColor = '#303e44'
     this.pathBuilder = new PathBuilder(this.tileSize, this.pathWidth, this.season.color)
