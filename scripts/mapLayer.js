@@ -58,7 +58,7 @@ function assignPanners (indexes) {
     if (!indexes.includes(i)) return
     if (e.tileData.type == 'forest') createElementPanner(e, 'audio/forest.ogg', i)
     if (e.tileData.type == 'building') createElementPanner(e, 'audio/cafe.ogg', i)
-    if (e.tileData.type == 'river') createElementPanner(e, 'audio/river4.wav', i)
+    if (e.tileData.type == 'river') createElementPanner(e, 'audio/river5.ogg', i)
   })
 }
 
