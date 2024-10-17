@@ -30,17 +30,17 @@ class River extends TileObject {
         if (this.direction.enter == 'l' || this.direction.enter == 'r') {
           this.rotation = randomInt(4, 'odd')
           this.boundary = [{
-            y: 29,
+            y: 33,
             x: 0,
-            h: 23,
+            h: 15,
             w: 80,
           }]
         } else {
           this.rotation = randomInt(4, 'even')
           this.boundary = [{
-            x: 29,
+            x: 33,
             y: 0,
-            w: 23,
+            w: 15,
             h: 80,
           }]
         }
