@@ -57,7 +57,7 @@ function assignPanners (indexes) {
   elementMap.forEach((e, i) => {
     if (!indexes.includes(i)) return
     if (e.tileData.type == 'forest') createElementPanner(e, 'audio/forest.ogg', i, refDistance)
-    if (e.tileData.type == 'building') createElementPanner(e, 'audio/cafe.ogg', i, refDistance / 2)
+    if (e.tileData.type == 'building') createElementPanner(e, 'audio/cafe.ogg', i, refDistance)
     if (e.tileData.type == 'river') createElementPanner(e, 'audio/river6.wav', i, refDistance / 2)
   })
 }
