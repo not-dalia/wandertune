@@ -18,4 +18,4 @@ const directions = ['u', 'r', 'd', 'l'];
 const currentSeason = ['spring', 'summer', 'autumn', 'winter'][randomInt(4)];
 
 const pixelsPerMeter = 15;
-const zoomFactor = 2;
+let zoomFactor = 2;

@@ -9,6 +9,11 @@ let loadedImages = {}
 
 const TownUtils = {
 	getAvailableScreenSpace() {
+		let x = document.documentElement.clientWidth;
+		let y = document.documentElement.clientHeight;
+		if (Math.floor((x - pathWidth) / (tileSize + pathWidth)) < 2|| Math.floor((y - pathWidth) / (tileSize + pathWidth)) < 2) {
+			zoomFactor = 3
+		}
 		return {
 			x: document.documentElement.clientWidth * zoomFactor,
 			y: document.documentElement.clientHeight * zoomFactor
@@ -27,7 +32,7 @@ const TownUtils = {
 		let elementIndex = element.dataset.elementIndex;
 		return elementIndex
 	}
-}  
+}
 
 function generateTileMap(availableTileCounts) {
 	let elementMap = [];
@@ -73,7 +78,7 @@ async function drawObjectInOrder(objectKeys, objectList, ctx) {
 			return
 		}
 		drawImageFromSrc(ctx, loadedImages[o.data.src], o)
-	}) 
+	})
 }
 
 function loadImageAsync(url) {
@@ -237,16 +242,23 @@ async function start() {
 	// calculate available space for tiles and canvas
 	let availableSpace = TownUtils.getAvailableScreenSpace();
 	let availableTileCounts = TownUtils.calculateAvailableTiles(availableSpace, pathWidth, tileSize);
-	
+
 	// create town canvas
 	let season = new Season(currentSeason)
 	const town = document.querySelector('.town');
+	const townContainer = document.querySelector('.town-container');
+	const body = document.querySelector('body');
+
 	town.innerHTML = ''
 	let townWidth = availableTileCounts.x * tileSize + availableTileCounts.x * pathWidth + pathWidth
 	let townHeight = availableTileCounts.y * tileSize + availableTileCounts.y * pathWidth + pathWidth
 	town.style.width = `${townWidth / zoomFactor}px`
 	town.style.height = `${townHeight / zoomFactor}px`
 	town.style.background = season.color
+	town.style.color = season.textColor
+	townContainer.style.minHeight = `${townHeight / zoomFactor}px`
+	// body.style.background = season.color
+	body.style.paddingBottom = `2rem`
 	const townCanvas = createTownCanvas(`town-canvas`, townWidth, townHeight)
 	town.append(townCanvas);
 

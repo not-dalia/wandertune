@@ -1,12 +1,60 @@
 html,
 body {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
+  font-size: 16px;
 }
 
 body {
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  position: relative;
+}
+
+header, .description, .controls {
+  width: 100%;
+  padding: 0 2rem;
+  margin-bottom: 0.5rem;
+
+}
+
+.controls {
+  gap: 5px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 0.2rem 1rem;
+  background-color: var(--primary-hover);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-family: Outfit, sans-serif;
+  font-size: 0.9rem;
+}
+
+button:hover {
+  background-color: var(--primary-color);
+}
+
+button:disabled {
+  background-color: gray;
+  cursor: not-allowed;
+}
+
+.town-container {
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
 }
 
 .town {

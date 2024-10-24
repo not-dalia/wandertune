@@ -162,7 +162,7 @@ function nearestPointOnLine(line, point) {
     minMax(linePoint1[0] + k * lineVector.x, linePoint1[0], linePoint2[0] ),
     minMax(linePoint1[1] + k * lineVector.y, linePoint1[1], linePoint2[1] ),
   ]
-  
+
 }
 
 function minMax (number, limit1, limit2) {
@@ -183,7 +183,7 @@ function updatePannerPositions () {
     maxY: listener.positionY.value + distanceRadius / zoomFactor,
   })
   let indexes = pannersToMove.map((p) => p.index)
-  let selectedPanners = document.querySelectorAll('.panner.moved') 
+  let selectedPanners = document.querySelectorAll('.panner.moved')
   selectedPanners.forEach(p => {
     if (indexes.includes(p.dataset.index)) return;
     p.classList.remove('moved')
@@ -312,8 +312,15 @@ window.addEventListener('mouseup', (e) => {
   animateCircle()
   updatePannerPositions() */
   if (!canDrawPath) return
-  mousePathArr.push([e.clientX, e.clientY])
-  pathCanvas.drawPoint([e.clientX, e.clientY], {color: pathColor, radius: 15 })
+  // get point adjusted for element offset
+  let pointX = e.clientX - pathCanvas.canvas.getBoundingClientRect().left
+  let pointY = e.clientY - pathCanvas.canvas.getBoundingClientRect().top
+
+  // if button is outside of canvas, return
+  if (pointX < 0 || pointY < 0 || pointX > pathCanvas.canvas.width || pointY > pathCanvas.canvas.height) return;
+
+  mousePathArr.push([pointX, pointY])
+  pathCanvas.drawPoint([pointX, pointY], {color: pathColor, radius: 15 })
   if (mousePathArr.length > 1) {
     pathCanvas.drawLine([mousePathArr[mousePathArr.length - 2], mousePathArr[mousePathArr.length - 1]], {strokeColor: pathColor, lineWidth: 6, dashLine: true}, {})
   }
@@ -365,7 +372,7 @@ function samplePathLine() {
   // let turningSamples = 5;
   console.log('turningSamples: ' + turningSamples)
   sampledPoints.forEach((p, i) => {
-  
+
     let lookingAtPoint = sampledPoints[Math.min(i + turningSamples, sampledPoints.length - 1)]
     let directionPointIndex = (i + halfSamples >= sampledPoints.length) ? i : i + halfSamples
     let directionPoint = sampledPoints[directionPointIndex]
@@ -403,12 +410,16 @@ function findPointOnLineByDistance([p1, p2], distance) {
 window.addEventListener('keydown', (e) => {
   // if (!listener) return;
   switch(e.key) {
-    case " ":
+    case "s":
       if (canDrawPath) break;
       audioPlaying = !audioPlaying
       break;
     case "p":
-      if (canDrawPath) break;
+      if (canDrawPath) {
+        samplePathLine()
+        playAudio()
+        break;
+      }
       audioPlaying = !audioPlaying
       toggleAudio()
       break;
@@ -416,6 +427,10 @@ window.addEventListener('keydown', (e) => {
       isInfoLayerVisible = !isInfoLayerVisible
       infoMapBuilder.setIsVisible(isInfoLayerVisible)
       console.log(isInfoLayerVisible ? "showing map" : "hiding map")
+      break;
+    case "r":
+      // refresh page
+      window.location.reload()
       break;
     case "ArrowLeft":
       if (canDrawPath) break;
@@ -446,6 +461,44 @@ window.addEventListener('keyup', (e) => {
   keyPressed = null;
 })
 
+document.querySelector('#button-play').addEventListener('click', () => {
+  if (canDrawPath) {
+    samplePathLine()
+    playAudio()
+    return;
+  }
+  audioPlaying = !audioPlaying
+  toggleAudio()
+});
+
+document.querySelector('#button-info').addEventListener('click', () => {
+  isInfoLayerVisible = !isInfoLayerVisible
+  infoMapBuilder.setIsVisible(isInfoLayerVisible)
+  console.log(isInfoLayerVisible ? "showing map" : "hiding map")
+});
+
+document.querySelector('#button-refresh').addEventListener('click', () => {
+  window.location.reload()
+});
+
+document.querySelector('#button-stand').addEventListener('click', () => {
+  if (canDrawPath) return;
+  audioPlaying = !audioPlaying
+});
+
+document.querySelector('#button-back').addEventListener('click', () => {
+  if (canDrawPath) return;
+  playIndex = Math.max(playIndex - stepSize * 10, 0)
+  clearInterval(listenerTimer)
+  listenerTimer = setInterval(moveListenerOnPath, updateRate)
+});
+
+document.querySelector('#button-forward').addEventListener('click', () => {
+  if (canDrawPath) return;
+  playIndex = Math.min(playIndex + stepSize * 10, sampledPoints.length - 1)
+  clearInterval(listenerTimer)
+  listenerTimer = setInterval(moveListenerOnPath, updateRate)
+});
 
 // setTimeout( initMap, 2000 )
 

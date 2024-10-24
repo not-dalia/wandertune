@@ -54,7 +54,7 @@ class MapCanvas {
       this.ctx.lineWidth = properties.lineWidth
       this.ctx.stroke()
     }
-    
+
   }
 
   drawLine (line, inputProperties = {}, {isNew = true, isToBeContinued = false, isClosed = false}) {
@@ -78,7 +78,7 @@ class MapCanvas {
     if (properties.dashLine && !Array.isArray(properties.dashLine)) {
       properties.dashLine = [20, 5]
     }
-    
+
     if (isNew) this.ctx.beginPath()
     this.ctx.setLineDash(properties.dashLine || []);
     this.ctx.moveTo(coordinates[0][0], coordinates[0][1]);
@@ -145,7 +145,7 @@ class MapCanvas {
     //sort horizontally then minmax to find centerX, sort vertically then minmax to find centerY
     points.sort((a, b) => (a[0] - b[0]))
     center[0] = (points[0][0] + points[points.length - 1][0]) / 2
-    
+
     points.sort((a, b) => (a[1] - b[1]))
     center[1] = (points[0][1] + points[points.length - 1][1]) / 2
 
@@ -171,12 +171,16 @@ class MapCanvas {
 
   getLineAngle (end, start = [0, 0], unit = 'radians') {
     let angle = Math.atan2(end[1] - start[1], end[0] - start[0])   //radians
-    
+
     if (unit === 'degrees' || unit === 'degree') {
       angle = 180 * angle / Math.PI
     }
     // return (360+Math.round(degrees))%360; //round number, avoid decimal fragments
     return angle
+  }
+
+  clear () {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
   }
 }
 
